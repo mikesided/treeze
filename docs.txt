@@ -1,0 +1,42 @@
+treeze/
+│
+├── pyproject.toml
+│
+├── treeze/
+│   │
+│   ├── __init__.py
+│   │
+│   ├── app.py
+│   │
+│   ├── ui/
+│   │   ├── __init__.py
+│   │   ├── widget.py
+│   │   ├── element.py
+│   │   ├── signal.py
+│   │   ├── style.py
+│   │   └── state.py
+│   │
+│   ├── widgets/
+│   │   ├── __init__.py
+│   │   └── button.py
+│   │
+│   ├── runtime/
+│   │   ├── __init__.py
+│   │   ├── web_server.py
+│   │   ├── protocol.py
+│   │   └── session.py
+│   │
+│   ├── renderer/
+│   │   ├── __init__.py
+│   │   ├── browser.py
+│   │   └── diff.py
+│   │
+│   └── client/
+│       ├── runtime.js
+│       ├── dom.js
+│       └── protocol.js
+│
+├── examples/
+│   └── hello.py
+│
+└── tests/

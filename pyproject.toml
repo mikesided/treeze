@@ -1,0 +1,60 @@
+[build-system]
+requires = [
+    "setuptools>=68",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "treeze"
+version = "0.1.0"
+description = "A Python-first reactive application framework"
+readme = "README.md"
+requires-python = ">=3.11"
+
+authors = [
+    {name = "Michael Cote"}
+]
+
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+]
+
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "black>=24.0"
+]
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = [
+    "treeze*"
+]
+
+
+[tool.setuptools.package-data]
+treeze = [
+    "client/*.js",
+    "client/*.html",
+    "client/*.css"
+]
+
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
+]
+
+
+[tool.ruff]
+line-length = 100
+
+
+[tool.black]
+line-length = 100
