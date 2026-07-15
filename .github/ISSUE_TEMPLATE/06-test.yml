@@ -1,0 +1,60 @@
+name: Test
+description: Add or improve tests/manual validation
+title: "[Test]: "
+labels: ["type: test"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What behavior needs test coverage?
+      placeholder: "Example: Patch engine should emit insert_child when a widget is inserted in the middle."
+    validations:
+      required: true
+
+  - type: textarea
+    id: cases
+    attributes:
+      label: Cases to cover
+      description: List specific scenarios.
+      placeholder: |
+        - Text change emits set_text
+        - Variant change emits add_class/remove_class
+        - Append child emits append_child
+        - Insert child emits insert_child
+        - Remove child emits remove_node
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Related files
+      description: Files likely involved.
+      placeholder: |
+        - treeze/runtime/patches.py
+        - treeze/runtime/patch_engine.py
+        - treeze/client/client.js
+    validations:
+      required: false
+
+  - type: dropdown
+    id: test-type
+    attributes:
+      label: Test type
+      options:
+        - Unit test
+        - Integration test
+        - Example/manual validation
+        - Browser/client validation
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: done-when
+    attributes:
+      label: Done when
+      options:
+        - label: Test or manual validation exists
+        - label: Test covers the intended behavior
+        - label: Existing examples still work

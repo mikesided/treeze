@@ -7,8 +7,8 @@ body:
     id: goal
     attributes:
       label: Goal
-      description: What should this change accomplish?
-      placeholder: "Example: Add remove_widget() support to Container."
+      description: What should this task accomplish?
+      placeholder: "Example: Remove Session._node_tree and rely on PatchEngine snapshots."
     validations:
       required: true
 
@@ -16,7 +16,8 @@ body:
     id: current-behavior
     attributes:
       label: Current behavior
-      description: What happens now?
+      description: What happens right now?
+      placeholder: "Example: Session still stores the full root node tree."
     validations:
       required: false
 
@@ -25,16 +26,37 @@ body:
     attributes:
       label: Desired behavior
       description: What should happen instead?
+      placeholder: "Example: Session should only retain widgets, dirty state, and the patch engine."
     validations:
       required: true
 
   - type: textarea
-    id: notes
+    id: implementation-notes
     attributes:
-      label: Notes
-      description: Implementation ideas, related files, edge cases.
+      label: Implementation notes
+      description: Related files, edge cases, or design notes.
+      placeholder: |
+        Related files:
+        - treeze/runtime/session.py
+        - treeze/runtime/patch_engine.py
     validations:
       required: false
+
+  - type: checkboxes
+    id: areas
+    attributes:
+      label: Areas affected
+      options:
+        - label: Runtime
+        - label: Client
+        - label: Widgets
+        - label: Layout
+        - label: Signals
+        - label: Patches
+        - label: Styling
+        - label: Docs
+        - label: Tests
+        - label: Examples
 
   - type: checkboxes
     id: done-when
@@ -42,5 +64,6 @@ body:
       label: Done when
       options:
         - label: Implementation is complete
-        - label: Relevant example is updated or added
-        - label: Tests/manual validation are done
+        - label: Existing examples still run
+        - label: New or updated test/example added if useful
+        - label: Code is cleaned up

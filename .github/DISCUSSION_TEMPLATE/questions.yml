@@ -1,0 +1,27 @@
+title: "[Question]: "
+labels: ["discussion: question"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What do you want to ask about Treeze?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What were you trying to do?
+    validations:
+      required: false
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Code or example
+      description: Paste a small example if relevant.
+      render: python
+    validations:
+      required: false

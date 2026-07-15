@@ -1,0 +1,55 @@
+name: Refactor / Cleanup
+description: Improve structure without changing public behavior
+title: "[Refactor]: "
+labels: ["type: refactor"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should be cleaned up or simplified?
+      placeholder: "Example: Simplify patch generation helpers without changing patch output."
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: Why is this refactor worth doing?
+      placeholder: "Example: The file is getting hard to maintain and has repeated patch dictionary construction."
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What files or systems are in scope?
+      placeholder: |
+        In scope:
+        - treeze/runtime/patches.py
+
+        Out of scope:
+        - changing the patch protocol
+    validations:
+      required: true
+
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Behavior that must stay the same
+      description: What should not change?
+      placeholder: "Example: Existing set_text, add_class, append_child patches should still be emitted."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: done-when
+    attributes:
+      label: Done when
+      options:
+        - label: Public behavior is unchanged
+        - label: Existing examples still work
+        - label: Code is simpler or easier to maintain
+        - label: Dead code removed if applicable

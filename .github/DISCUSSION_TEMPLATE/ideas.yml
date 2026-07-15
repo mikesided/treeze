@@ -1,0 +1,36 @@
+title: "[Idea]: "
+labels: ["discussion: idea"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idea
+      description: What are you proposing?
+      placeholder: "Example: Add a VirtualList widget for large lists."
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why would this be useful for Treeze?
+    validations:
+      required: true
+
+  - type: textarea
+    id: possible-api
+    attributes:
+      label: Possible API
+      description: What might the Python API look like?
+      render: python
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Related ideas, tradeoffs, or implementation thoughts.
+    validations:
+      required: false

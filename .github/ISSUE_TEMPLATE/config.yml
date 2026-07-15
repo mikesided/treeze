@@ -1,1 +1,6 @@
 blank_issues_enabled: false
+
+contact_links:
+  - name: Questions / Discussions
+    url: https://github.com/mikesided/treeze/discussions
+    about: Ask questions, discuss ideas, or get help without opening an issue.

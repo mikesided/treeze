@@ -1,0 +1,57 @@
+name: Investigation
+description: Research or decide an architectural direction
+title: "[Investigation]: "
+labels: ["type: investigation"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What are we trying to figure out?
+      placeholder: "Example: Should PatchEngine store every node snapshot or only widget root snapshots?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why does this matter?
+      placeholder: "Example: This affects memory use for many sessions with large UI trees."
+    validations:
+      required: true
+
+  - type: textarea
+    id: options
+    attributes:
+      label: Options to compare
+      description: List possible approaches.
+      placeholder: |
+        Option A: store all serialized nodes
+        Option B: store widget root snapshots only
+        Option C: direct patch queue for hot widgets
+    validations:
+      required: false
+
+  - type: textarea
+    id: decision-criteria
+    attributes:
+      label: Decision criteria
+      description: What makes an option good or bad?
+      placeholder: |
+        - memory use
+        - complexity
+        - correctness
+        - future-proofing
+        - developer ergonomics
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: done-when
+    attributes:
+      label: Done when
+      options:
+        - label: Options are documented
+        - label: Recommendation is written
+        - label: Follow-up implementation issues are created if needed

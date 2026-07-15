@@ -1,0 +1,88 @@
+name: Bug
+description: Report something broken in Treeze
+title: "[Bug]: "
+labels: ["type: bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is broken?
+      placeholder: "Example: Button text patch does not update the DOM."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the smallest steps or code example that reproduces the bug.
+      placeholder: |
+        1. Run examples/hello.py
+        2. Click the button
+        3. Observe that...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / traceback / browser console
+      description: Paste any Python traceback or browser console output.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: related-files
+    attributes:
+      label: Related files
+      description: Files likely involved.
+      placeholder: |
+        - treeze/runtime/session.py
+        - treeze/client/client.js
+    validations:
+      required: false
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Blocks app startup
+        - Breaks core runtime
+        - Breaks one widget or feature
+        - Minor visual/cleanup issue
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: affected-area
+    attributes:
+      label: Areas affected
+      options:
+        - label: Runtime
+        - label: Client
+        - label: Widgets
+        - label: Signals
+        - label: Patches
+        - label: Styling
+        - label: Docs
+        - label: Tests
+        - label: Examples

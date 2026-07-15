@@ -1,0 +1,56 @@
+name: Documentation
+description: Track documentation work
+title: "[Docs]: "
+labels: ["type: docs"]
+body:
+  - type: textarea
+    id: topic
+    attributes:
+      label: Topic
+      description: What needs to be documented?
+      placeholder: "Example: Dirty tracking rules in widget.py and architecture.md."
+    validations:
+      required: true
+
+  - type: textarea
+    id: audience
+    attributes:
+      label: Audience
+      description: Who is this documentation for?
+      placeholder: "Example: Treeze framework contributors, future widget authors, or end users."
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Location
+      description: Where should the documentation live?
+      placeholder: |
+        - docs/architecture.md
+        - treeze/core/widget.py docstring
+        - README.md
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Important details to include.
+      placeholder: |
+        Include:
+        - public attributes auto-mark dirty
+        - private attributes are ignored unless allow-listed
+        - mutation methods must call _mark_dirty()
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: done-when
+    attributes:
+      label: Done when
+      options:
+        - label: Documentation is written
+        - label: Examples are included if useful
+        - label: Outdated notes are removed

@@ -1,0 +1,72 @@
+name: Feature
+description: Propose a new Treeze feature
+title: "[Feature]: "
+labels: ["type: feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What problem does this feature solve?
+      placeholder: "Example: Containers can add widgets but cannot remove them."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-api
+    attributes:
+      label: Proposed API
+      description: What should the user-facing API look like?
+      placeholder: |
+        layout.remove_widget(button)
+        layout.clear()
+    validations:
+      required: false
+
+  - type: textarea
+    id: desired-behavior
+    attributes:
+      label: Desired behavior
+      description: What should happen internally and visually?
+      placeholder: |
+        Removing a widget should:
+        - detach it from the parent
+        - mark the parent dirty
+        - update the session widget index
+        - send a remove_node or replace_children patch
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation-notes
+    attributes:
+      label: Implementation notes
+      description: Related files, patch ops, edge cases, or constraints.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: affected-area
+    attributes:
+      label: Areas affected
+      options:
+        - label: Runtime
+        - label: Client
+        - label: Widgets
+        - label: Signals
+        - label: Patches
+        - label: Styling
+        - label: Docs
+        - label: Tests
+        - label: Examples
+
+  - type: checkboxes
+    id: done-when
+    attributes:
+      label: Done when
+      options:
+        - label: Public API is implemented
+        - label: Runtime behavior works
+        - label: Client behavior works if relevant
+        - label: Example added or updated
+        - label: Tests/manual validation completed

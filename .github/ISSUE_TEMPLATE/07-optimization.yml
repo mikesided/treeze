@@ -1,0 +1,62 @@
+name: Performance
+description: Track performance or memory improvements
+title: "[Performance]: "
+labels: ["type: performance"]
+body:
+  - type: textarea
+    id: concern
+    attributes:
+      label: Concern
+      description: What may be slow or memory-heavy?
+      placeholder: "Example: PatchEngine stores serialized snapshots for every node per session."
+    validations:
+      required: true
+
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Scenario
+      description: What kind of app or workload exposes this?
+      placeholder: |
+        Example:
+        - 100 sessions
+        - 2,000 widgets each
+        - frequent signal updates
+    validations:
+      required: true
+
+  - type: textarea
+    id: measurement
+    attributes:
+      label: Measurement plan
+      description: How should this be measured?
+      placeholder: |
+        Track:
+        - widget count
+        - node snapshot count
+        - patch generation time
+        - memory per session
+    validations:
+      required: false
+
+  - type: textarea
+    id: possible-solutions
+    attributes:
+      label: Possible solutions
+      description: Ideas to explore.
+      placeholder: |
+        - remove Session._node_tree
+        - compact node snapshots
+        - index widget roots only
+        - virtualized widgets
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: done-when
+    attributes:
+      label: Done when
+      options:
+        - label: Baseline measurement exists
+        - label: Improvement is implemented or decision is documented
+        - label: No core behavior regressed
