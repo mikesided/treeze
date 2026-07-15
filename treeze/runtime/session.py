@@ -62,7 +62,6 @@ class Session:
         self._id = uuid.uuid4().hex
         self._app = app
         self._widgets: dict[str, Widget] = {}  # Widgets are walked & stored here for lookup by events
-        self._node_tree: Node | None = None  # Rendered node tree
         self._created_at = datetime.now(timezone.utc)
         self._closed = False
 
@@ -95,11 +94,6 @@ class Session:
         return self._window
 
     @property
-    def node_tree(self) -> Node | None:
-        """Read only. Latest built node tree."""
-        return self._node_tree
-
-    @property
     def created_at(self) -> datetime:
         """Read only. Session creation time."""
         return self._created_at
@@ -118,11 +112,14 @@ class Session:
         if self.closed:
             raise TreezeRuntimeError('Cannot build a closed session.')
 
-        self._node_tree = self.app._build_window(self.window)
-        self._index_widgets()
-        self._patch_engine.capture_tree(self._node_tree)
+        node_tree = self.app._build_window(self.window)
 
-        return self._node_tree
+        self._index_widgets()
+        self._patch_engine.capture_tree(node_tree)
+
+        self._dirty_widgets.clear()
+
+        return node_tree
 
     def _handle_message(self, message: dict[str, Any]) -> None:
         """
@@ -196,7 +193,6 @@ class Session:
             return
 
         self._closed = True
-        self._node_tree = None
 
     def _mark_widget_dirty(self, widget: Widget) -> None:
         if self.closed:

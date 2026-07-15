@@ -1,0 +1,46 @@
+name: Task
+description: Track implementation work for Treeze
+title: "[Task]: "
+labels: ["type: task"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should this change accomplish?
+      placeholder: "Example: Add remove_widget() support to Container."
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: Current behavior
+      description: What happens now?
+    validations:
+      required: false
+
+  - type: textarea
+    id: desired-behavior
+    attributes:
+      label: Desired behavior
+      description: What should happen instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Implementation ideas, related files, edge cases.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: done-when
+    attributes:
+      label: Done when
+      options:
+        - label: Implementation is complete
+        - label: Relevant example is updated or added
+        - label: Tests/manual validation are done

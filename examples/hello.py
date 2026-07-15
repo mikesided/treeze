@@ -39,6 +39,7 @@ class MyWindow(Window):
         layout.size_policy =(SizePolicy.EXPANDING, SizePolicy.EXPANDING)
         layout.minimum_size = Size(500, 500)
         layout.spacing = 10
+        self.btn_4 = Button(text='hello', classes=['--class-hello'])
 
         self.btn1.clicked.connect(lambda: self.on_btn1_clicked(self.btn1))
         #self.btn2.clicked.connect(self.on_btn2_clicked)
@@ -47,6 +48,11 @@ class MyWindow(Window):
     def on_btn1_clicked(self, btn):
         btn.text = 'asdf'
         btn.variant = Variant.SUCCESS
+
+        self.btn_4.text = 'hello world'
+        self.layout.add_widget(self.btn_4)
+        self.btn_4.text = 'hello world2'
+        #self.btn_4.remove_class('--class-hello')
 
     def on_btn2_clicked(self):
         pass
