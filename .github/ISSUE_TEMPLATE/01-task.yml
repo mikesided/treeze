@@ -50,7 +50,6 @@ body:
         - label: Runtime
         - label: Client
         - label: Widgets
-        - label: Layout
         - label: Signals
         - label: Patches
         - label: Styling
