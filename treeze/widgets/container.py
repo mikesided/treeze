@@ -49,6 +49,11 @@ class Container(Widget, ABC):
         self._children.insert(index, widget)
         widget._set_parent(self)
 
+        if self._session is not None:
+            widget._set_session(self._session)
+
+        self._mark_dirty()
+
     def remove_widget(self, widget: Widget):
         """
         Removes a child widget from the container
@@ -60,6 +65,7 @@ class Container(Widget, ABC):
 
         self._children.remove(widget)
         widget._set_parent(None)
+        self._mark_dirty()
 
     def _walk_widgets(self):
         yield self

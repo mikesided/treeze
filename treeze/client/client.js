@@ -303,6 +303,22 @@ function applyPatch(patch) {
             applyAppendChildPatch(patch);
             return;
 
+        case 'replace_node':
+            applyReplaceNodePatch(patch);
+            return;
+
+        case 'replace_children':
+            applyReplaceChildrenPatch(patch);
+            return;
+
+        case 'insert_child':
+            applyInsertChildPatch(patch);
+            return;
+
+        case 'remove_node':
+            applyRemoveNodePatch(patch);
+            return;
+
         default:
             console.warn('Unknown Treeze patch:', patch);
     }
@@ -405,4 +421,30 @@ function applyAppendChildPatch(patch) {
     const child = createElement(patch.data.child);
 
     element.appendChild(child);
+}
+
+function applyReplaceNodePatch(patch) {
+    const element = findElementByWidgetId(patch.target_id);
+
+    if (!element) {
+        console.warn('Patch target not found:', patch);
+        return;
+    }
+
+    element.replaceWith(
+        createElement(patch.data.node),
+    );
+}
+
+function applyReplaceChildrenPatch(patch) {
+    const element = findElementByWidgetId(patch.target_id);
+
+    if (!element) {
+        console.warn('Patch target not found:', patch);
+        return;
+    }
+
+    element.replaceChildren(
+        ...patch.data.children.map((child) => createElement(child)),
+    );
 }

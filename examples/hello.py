@@ -27,24 +27,32 @@ class MyWindow(Window):
     def __init__(self, *args, **kwargs):
         super().__init__(layout=VLayout(), *args, **kwargs)
         layout = self.layout
-        btn1 = Button(text='Click me', classes=['my_button'])
-        btn1.size_policy = (SizePolicy.EXPANDING, SizePolicy.EXPANDING)
-        btn1.variant = Variant.SECONDARY
-        layout.add_widget(btn1)
-        btn2 = Button(text='Don\'t click here')
-        layout.add_widget(btn2, position=InsertPosition.FIRST)
-        btn3 = Button(text='Click there')
-        btn3.variant = Variant.MUTED
-        layout.add_widget(btn3, index=1)
+        self.btn1 = Button(text='Click me', classes=['my_button'])
+        self.btn1.size_policy = (SizePolicy.EXPANDING, SizePolicy.EXPANDING)
+        self.btn1.variant = Variant.SECONDARY
+        layout.add_widget(self.btn1)
+        self.btn2 = Button(text='Don\'t click here')
+        layout.add_widget(self.btn2, position=InsertPosition.FIRST)
+        self.btn3 = Button(text='Click there')
+        self.btn3.variant = Variant.MUTED
+        layout.add_widget(self.btn3, index=1)
         layout.size_policy =(SizePolicy.EXPANDING, SizePolicy.EXPANDING)
         layout.minimum_size = Size(500, 500)
         layout.spacing = 10
 
-        btn1.clicked.connect(on_clicked)
+        self.btn1.clicked.connect(lambda: self.on_btn1_clicked(self.btn1))
+        #self.btn2.clicked.connect(self.on_btn2_clicked)
+        #self.btn3.clicked.connect(self.on_btn3_clicked)
 
-def on_clicked(*args, **kwargs):
-    print(args)
-    print(kwargs)
+    def on_btn1_clicked(self, btn):
+        btn.text = 'asdf'
+        btn.variant = Variant.SUCCESS
+
+    def on_btn2_clicked(self):
+        pass
+
+    def on_btn3_clicked(self):
+        self.btn3.test_signal.emit('asdf')
 
 app = App()
 app.window = MyWindow

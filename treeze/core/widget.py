@@ -21,6 +21,7 @@ from ..utils.ids import create_widget_id
 # Forward Declarations
 if TYPE_CHECKING:
     from .node import Node
+    from ..runtime.session import Session
     from ..widgets.container import Container
 
 # ______________________________________________________________________________________________________________________
@@ -28,6 +29,43 @@ if TYPE_CHECKING:
 _widget_id_counter = count(1)
 
 class Widget(ABC):
+    """
+    Base class for Widget.
+    
+    A Widget is the single source of UI elements in treeze. Everything subclasses a widget.
+    
+
+    NOTE: Dirty tracking
+    |   
+    |    Treeze uses dirty tracking to decide which widgets need to be re-rendered
+    |   after a signal mutates Python widget state.
+    |
+    |   Convention:
+    |    - Public attributes are treated as render-affecting state. Changing them marks
+    |    the widget dirty automatically through __setattr__.
+    |    Example: widget.text, widget.variant, widget.size_policy.
+    |
+    |    - Private attributes are treated as framework/internal state. Changing them does
+    |    not mark the widget dirty unless the attribute is explicitly allow-listed by
+    |    the widget class.
+    |    Example: widget._node, widget._parent, widget._session.
+    |
+    |
+    |    - In-place mutations are not detected by __setattr__. Methods that mutate
+    |    internal lists, dictionaries, sets, or widget structure must call
+    |    _mark_dirty() themselves.
+    |    Example: add_widget(), remove_widget(), add_class(), remove_class().
+    |
+    |    Dirty widgets are collected by the active Session. After a client signal is
+    |    handled, the runtime rebuilds/diffs only those dirty widgets and sends the
+    |    resulting patches to the browser.
+    |
+    |    During initial widget construction, widgets usually have no active session yet.
+    |    Dirty marks at that stage are harmless: they affect the initial render, not a
+    |    browser patch. The session clears dirty state after capturing the initial tree.
+    
+
+    """
     # TODO: parent_changed signal (old, new)
 
     DEFAULT = Variant.DEFAULT
@@ -43,6 +81,7 @@ class Widget(ABC):
     _CSS_CLASS: ClassVar[str | None] = 'tz-widget'
     _CSS_CLASSES: ClassVar[tuple[str, ...]] = ()
     _SUPPORTED_VARIANTS: ClassVar[tuple[Variant, ...]] = (Variant.DEFAULT)
+    _DIRTY_PRIVATE_ATTRIBUTES: set[str] = set()  # Attributes in here will mark the widget dirty on update
 
     # BEHAVIOR
     _CHILDHOST: bool = False  # Can this widget host children?
@@ -58,6 +97,9 @@ class Widget(ABC):
         # Internal properties
         self._id = create_widget_id()
         self._node: Node | None = None
+        self._session: Session = None
+        self._dirty: bool = False
+        self._suspend_dirty_tracking: bool = False
 
         # Framework properties
         self.variant = variant
@@ -103,6 +145,10 @@ class Widget(ABC):
     def id(self) -> str:
         """Read only. The widget's internal ID"""
         return self._id
+    
+    @property
+    def _is_dirty(self) -> bool:
+        return self._dirty
     
     @property
     def signals(self) -> tuple[BoundSignal, ...]:
@@ -193,6 +239,7 @@ class Widget(ABC):
 
         if class_name not in self._extra_classes:
             self._extra_classes.append(class_name)
+            self._mark_dirty()
 
 
     def remove_class(self, class_name: str) -> None:
@@ -204,6 +251,7 @@ class Widget(ABC):
 
         if class_name in self._extra_classes:
             self._extra_classes.remove(class_name)
+            self._mark_dirty()
     
 
     # ==========================================================================
@@ -222,6 +270,22 @@ class Widget(ABC):
     def _walk_widgets(self):
         """Yield any widgets owned by this widget. Used for event callback."""
         yield self
+
+    def _set_session(self, session: Session | None = None) -> None:
+        self._session = session
+
+    def _mark_dirty(self) -> None:
+        if getattr(self, '_suspend_dirty_tracking', False):
+            return
+
+        self._dirty = True
+
+        session = getattr(self, '_session', None)
+        if session is not None:
+            session._mark_widget_dirty(self)
+
+    def _mark_clean(self) -> None:
+        self._dirty = False
 
 
     # ==========================================================================
@@ -415,8 +479,11 @@ class Widget(ABC):
 
     def _build(self) -> Node:
         """Render as a node, retain and return"""
-        if self._node is None:
-            self._node = self._render()
+        # TODO: implement dirty flags to use caching
+        #if self._node is None:
+        #    self._node = self._render()
+            
+        self._node = self._render()
 
         return self._node
 
@@ -425,13 +492,49 @@ class Widget(ABC):
     #  Internal
     # ==========================================================================
 
+    @classmethod
+    def _dirty_private_attributes(cls) -> set[str]:
+        attributes: set[str] = set()
+
+        for base in reversed(cls.mro()):
+            attributes.update(
+                getattr(base, '_DIRTY_PRIVATE_ATTRIBUTES', set())
+            )
+
+        return attributes
+
+    def _is_dirty_attribute(self, name: str) -> bool:
+        if not name.startswith('_'):
+            return True
+
+        return name in type(self)._dirty_private_attributes()
+
     def __setattr__(self, name: str, value: Any) -> None:
         if isinstance(value, Signal):
             self._assign_dynamic_signal(name, value)
+
+            if self._is_dirty_attribute(name):
+                self._mark_dirty()
+
             return
 
         if '_signals' in self.__dict__ and self._has_signal(name):
-            # TODO: Tell the user how to disconnect it
             raise TreezeRuntimeError(f'Signal {name!r} already connected.')
 
+        try:
+            old_value = object.__getattribute__(self, name)
+        except AttributeError:
+            old_value = None
+
         super().__setattr__(name, value)
+
+        if old_value == value:
+            return
+
+        if not self._is_dirty_attribute(name):
+            return
+
+        if '_session' not in self.__dict__:
+            return
+
+        self._mark_dirty()

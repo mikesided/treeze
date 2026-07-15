@@ -74,6 +74,9 @@ class Window(Widget):
 
         if self._layout is not None:
             self._layout._set_parent(self)
+            
+            if self._session is not None:
+                layout._set_session(self._session)
 
     # ==========================================================================
     #  Private

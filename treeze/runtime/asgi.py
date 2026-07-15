@@ -13,7 +13,11 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .protocol import ServerDialogMessage, ServerRenderMessage
+from .protocol import (
+    ServerDialogMessage,
+    ServerPatchesMessage,
+    ServerRenderMessage,
+)
 
 from ..core.exceptions import TreezeError
 
@@ -60,19 +64,18 @@ def create_asgi_app(app: App) -> FastAPI:
                 client_message = await ws.receive_json()
 
                 try:
-                    session._handle_message(client_message)
+                    patches = session._handle_message(client_message)
 
-                    node_tree = session._build()
-
-                    await ws.send_json(
-                        ServerRenderMessage(
-                            root=node_tree.serialize(),
-                        ).to_protocol_message().to_dict()
-                    )
+                    if patches:
+                        await ws.send_json(
+                            ServerPatchesMessage(
+                                patches=patches,
+                            ).to_protocol_message().to_dict()
+                        )
 
                 except TreezeError as error:
                     print(traceback.format_exc())
-                    
+
                     await ws.send_json(
                         ServerDialogMessage(
                             level='error',

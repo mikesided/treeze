@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 from typing import Any, TYPE_CHECKING
 import uuid
 
+from .patch_engine import PatchEngine
+from .patches import diff_nodes
 from .protocol import ClientSignalMessage
 
 from ..core.exceptions import TreezeRuntimeError
@@ -53,6 +55,7 @@ class SessionManager:
 
         self._sessions.clear()
 
+
 class Session:
 
     def __init__(self, app: App):
@@ -62,6 +65,9 @@ class Session:
         self._node_tree: Node | None = None  # Rendered node tree
         self._created_at = datetime.now(timezone.utc)
         self._closed = False
+
+        self._dirty_widgets: set[Widget] = set()
+        self._patch_engine = PatchEngine()
 
         self.id_scope = create_id_scope()
 
@@ -114,29 +120,48 @@ class Session:
 
         self._node_tree = self.app._build_window(self.window)
         self._index_widgets()
+        self._patch_engine.capture_tree(self._node_tree)
 
         return self._node_tree
 
     def _handle_message(self, message: dict[str, Any]) -> None:
         """
         Handle a client message for this session.
-        Behaves like an event dispatch:
-            - find widget by ID
-            - fire signal
+
+        For now, this works by:
+        - serializing the current node tree
+        - emitting the signal
+        - rebuilding the new node tree
+        - diffing old vs new
+        - returning patches
         """
         if self.closed:
             raise TreezeRuntimeError('Cannot handle messages on a closed session.')
 
         message = Validator.ensure(message, dict)
-
         message_type = Validator.ensure(message.get('type'), str)
         payload = Validator.ensure(message.get('payload'), dict)
 
         with use_id_scope(self.id_scope):
             match message_type:
                 case 'client.signal':
+                    self._dirty_widgets.clear()
+
                     signal_message = ClientSignalMessage.from_payload(payload)
                     self._handle_signal_message(signal_message)
+
+                    self._index_widgets()
+
+                    patches = self._patch_engine.create_patches_for_dirty_widgets(
+                        self._dirty_widgets,
+                    )
+
+                    for widget in self._dirty_widgets:
+                        widget._mark_clean()
+
+                    self._dirty_widgets.clear()
+
+                    return patches
 
                 case _:
                     raise TreezeRuntimeError(
@@ -159,10 +184,11 @@ class Session:
 
     def _index_widgets(self) -> None:
         """Walk all widgets of the app and store them on self for reference"""
-        self._widgets = {
-            widget.id: widget
-            for widget in self.window._walk_widgets()
-        }
+        self._widgets = {}
+
+        for widget in self.window._walk_widgets():
+            widget._set_session(self)
+            self._widgets[widget.id] = widget
 
     def _close(self) -> None:
         """Close the session and release runtime references."""
@@ -171,3 +197,10 @@ class Session:
 
         self._closed = True
         self._node_tree = None
+
+    def _mark_widget_dirty(self, widget: Widget) -> None:
+        if self.closed:
+            return
+
+        self._dirty_widgets.add(widget)
+

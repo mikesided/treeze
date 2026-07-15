@@ -215,6 +215,23 @@ class Orientation(Enum):
     HORIZONTAL = auto()
     VERTICAL = auto()
 
+class PatchOp(StrEnum):
+    """Maps patches to client.js implementation"""
+    REPLACE_NODE = 'replace_node'
+    REMOVE_NODE = 'remove_node'
+
+    REPLACE_CHILDREN = 'replace_children'
+    APPEND_CHILD = 'append_child'
+    INSERT_CHILD = 'insert_child'
+
+    SET_ATTRIBUTE = 'set_attribute'
+    SET_PROPERTY = 'set_property'
+    SET_TEXT = 'set_text'
+    SET_STYLE = 'set_style'
+
+    ADD_CLASS = 'add_class'
+    REMOVE_CLASS = 'remove_class'
+    
 class SizePolicy(StrEnum):
     EXPANDING = '1 1 0'
     FIXED = '0 0 auto'
