@@ -1,7 +1,7 @@
-name: Performance
+name: Optimization
 description: Track performance or memory improvements
-title: "[Performance]: "
-labels: ["type: performance"]
+title: "[Optimization]: "
+labels: ["type: optimization"]
 body:
   - type: textarea
     id: concern

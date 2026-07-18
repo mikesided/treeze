@@ -22,7 +22,7 @@ from ..utils.ids import create_widget_id
 if TYPE_CHECKING:
     from .node import Node
     from ..runtime.session import Session
-    from ..widgets.container import Container
+    from ..widgets.bases.container import Container
 
 # ______________________________________________________________________________________________________________________
 
@@ -86,6 +86,9 @@ class Widget(ABC):
     # BEHAVIOR
     _CHILDHOST: bool = False  # Can this widget host children?
     _ORIENTATION: Orientation | None = None  # Orientation forced by this widget (mostly used by layouts)
+
+    # SIGNALS
+    parent_changed = Signal(Widget, Widget)
 
     def __init__(
             self, 

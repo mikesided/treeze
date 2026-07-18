@@ -5,11 +5,11 @@ Description:  Base class for a Button widget
 """
 # ______________________________________________________________________________________________________________________
 # Imports
-from ..core.enums import BrowserEvent, EventData, Variant
-from ..core.events import EventBinding
-from ..core.node import Node
-from ..core.signals import Signal
-from ..core.widget import Widget
+from ...core.enums import BrowserEvent, EventData, Variant
+from ...core.events import EventBinding
+from ...core.node import Node
+from ...core.signals import Signal
+from ...core.widget import Widget
 
 # ______________________________________________________________________________________________________________________
 

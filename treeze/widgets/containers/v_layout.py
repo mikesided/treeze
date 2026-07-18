@@ -7,10 +7,10 @@ Description:  Base class for a Layout (abstract)
 # Imports
 from abc import ABC, abstractmethod
 
-from .layout import Layout
+from ..bases.layout import Layout
 
-from ..core.enums import Orientation
-from ..core.node import Node
+from ...core.enums import Orientation
+from ...core.node import Node
 
 # ______________________________________________________________________________________________________________________
 

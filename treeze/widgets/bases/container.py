@@ -7,11 +7,11 @@ Description:  Base class for a Container (abstract)
 # Imports
 from abc import ABC, abstractmethod
 
-from ..core.enums import InsertPosition
-from ..core.exceptions import TreezeValueError
-from ..core.node import Node
-from ..core.validation import Validator
-from ..core.widget import Widget
+from ...core.enums import InsertPosition
+from ...core.exceptions import TreezeValueError
+from ...core.node import Node
+from ...core.validation import Validator
+from ...core.widget import Widget
 
 # ______________________________________________________________________________________________________________________
 

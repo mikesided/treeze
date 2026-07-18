@@ -43,21 +43,6 @@ body:
       required: false
 
   - type: checkboxes
-    id: areas
-    attributes:
-      label: Areas affected
-      options:
-        - label: Runtime
-        - label: Client
-        - label: Widgets
-        - label: Signals
-        - label: Patches
-        - label: Styling
-        - label: Docs
-        - label: Tests
-        - label: Examples
-
-  - type: checkboxes
     id: done-when
     attributes:
       label: Done when

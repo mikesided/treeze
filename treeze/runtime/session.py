@@ -23,7 +23,7 @@ from ..utils.ids import create_id_scope, use_id_scope
 if TYPE_CHECKING:
     from ..core.app import App
     from ..core.widget import Widget
-    from ..widgets.window import Window
+    from ..widgets.primitives.window import Window
 
 # ______________________________________________________________________________________________________________________
 class SessionManager:

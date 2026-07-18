@@ -44,22 +44,7 @@ body:
       description: Related files, patch ops, edge cases, or constraints.
     validations:
       required: false
-
-  - type: checkboxes
-    id: affected-area
-    attributes:
-      label: Areas affected
-      options:
-        - label: Runtime
-        - label: Client
-        - label: Widgets
-        - label: Signals
-        - label: Patches
-        - label: Styling
-        - label: Docs
-        - label: Tests
-        - label: Examples
-
+      
   - type: checkboxes
     id: done-when
     attributes:

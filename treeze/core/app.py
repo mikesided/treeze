@@ -16,10 +16,10 @@ from .server import Server
 from ..runtime.session import SessionManager
 from .types.theme import Theme
 from .validation import Validator
-from ..widgets.window import Window, _allow_window_construction
+from ..widgets.primitives.window import Window, _allow_window_construction
 
 if TYPE_CHECKING:
-    from ..widgets.window import Window
+    from ..widgets.primitives.window import Window
 
 # ______________________________________________________________________________________________________________________
 
