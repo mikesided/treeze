@@ -448,3 +448,30 @@ function applyReplaceChildrenPatch(patch) {
         ...patch.data.children.map((child) => createElement(child)),
     );
 }
+
+function applyInsertChildPatch(patch) {
+    const element = findElementByWidgetId(patch.target_id);
+
+    if (!element) {
+        console.warn('Patch target not found:', patch);
+        return;
+    }
+
+    const child = createElement(patch.data.child);
+    const index = patch.data.index;
+    const referenceElement = element.children[index] ?? null;
+
+    element.insertBefore(child, referenceElement);
+}
+
+
+function applyRemoveNodePatch(patch) {
+    const element = findElementByWidgetId(patch.target_id);
+
+    if (!element) {
+        console.warn('Patch target not found:', patch);
+        return;
+    }
+
+    element.remove();
+}

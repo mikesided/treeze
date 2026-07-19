@@ -155,7 +155,6 @@ def _diff_classes(
             },
         })
 
-
 def _diff_children(
     patches: list[Patch],
     target_id: str,
@@ -173,12 +172,12 @@ def _diff_children(
     ]
 
     if old_ids == new_ids:
-        for old_child, new_child in zip(old, new):
-            _diff_node(old_child, new_child, patches)
-
+        _diff_shared_children(old, new, patches)
         return
 
     if _is_simple_append(old_ids, new_ids):
+        _diff_shared_children(old, new, patches)
+
         for child in new[len(old):]:
             patches.append({
                 'op': PatchOp.APPEND_CHILD,
@@ -193,8 +192,11 @@ def _diff_children(
     insert_index = _simple_insert_index(old_ids, new_ids)
 
     if insert_index is not None:
+        _diff_shared_children(old, new, patches)
+
+        inserted_count = len(new_ids) - len(old_ids)
         inserted_children = new[
-            insert_index:insert_index + len(new_ids) - len(old_ids)
+            insert_index:insert_index + inserted_count
         ]
 
         for offset, child in enumerate(inserted_children):
@@ -212,6 +214,8 @@ def _diff_children(
     removed_ids = _simple_removed_ids(old_ids, new_ids)
 
     if removed_ids is not None:
+        _diff_shared_children(old, new, patches)
+
         for removed_id in removed_ids:
             patches.append({
                 'op': PatchOp.REMOVE_NODE,
@@ -229,6 +233,23 @@ def _diff_children(
         },
     })
 
+def _diff_shared_children(
+    old: list[SerializedNode],
+    new: list[SerializedNode],
+    patches: list[Patch],
+) -> None:
+    old_by_id = {
+        child['id']: child
+        for child in old
+    }
+
+    for new_child in new:
+        old_child = old_by_id.get(new_child['id'])
+
+        if old_child is None:
+            continue
+
+        _diff_node(old_child, new_child, patches)
 
 def _is_simple_append(old_ids: list[str], new_ids: list[str]) -> bool:
     if len(new_ids) <= len(old_ids):

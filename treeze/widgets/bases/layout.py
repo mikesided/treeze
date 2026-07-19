@@ -20,7 +20,7 @@ class Layout(Container, ABC):
     _CSS_CLASS = 'tz-layout'
     def __init__(
             self, 
-            spacing: int = 0,
+            spacing: int | None = None,
             horizontal_alignment: LayoutAlignment = LayoutAlignment.CENTER,
             vertical_alignment: LayoutAlignment = LayoutAlignment.CENTER,
             *args,
@@ -37,8 +37,8 @@ class Layout(Container, ABC):
         return self._spacing
     
     @spacing.setter
-    def spacing(self, spacing: int):
-        self._spacing = Validator.ensure(spacing, int)
+    def spacing(self, spacing: int | None):
+        self._spacing = None if spacing is None else Validator.validate_spacing(spacing=spacing)
     
     @property
     def horizontal_alignment(self) -> LayoutAlignment:
@@ -58,12 +58,10 @@ class Layout(Container, ABC):
 
     def _styles(self) -> dict[str, str]:
         styles = super()._styles()
-        styles.update({
-            'display': 'flex',
-            '--tz-spacing': f'{self.spacing}px',
-            '--tz-vertical-alignment': self.vertical_alignment.value,
-            '--tz-horizontal-alignment': self.horizontal_alignment.value,
-        })
+
+        if self.spacing is not None:
+            styles['gap'] = f'{self.spacing}px'
+
         return styles
     
     @abstractmethod

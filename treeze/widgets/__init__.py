@@ -8,6 +8,7 @@ Description:  Module init file for treeze.widgets
 from .bases.container import Container
 
 from .containers.v_layout import VLayout
+from .containers.h_layout import HLayout
 
 from .primitives.button import Button
 from .primitives.window import Window

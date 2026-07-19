@@ -16,7 +16,7 @@ from treeze.core import App
 from treeze.core.enums import *
 from treeze.core.exceptions import TreezeError
 from treeze.core import *
-from treeze.widgets import Button, VLayout, Window
+from treeze.widgets import Button, HLayout, VLayout, Window
 
 # ______________________________________________________________________________________________________________________
 
@@ -25,40 +25,38 @@ from treeze.widgets import Button, VLayout, Window
 class MyWindow(Window):
     
     def __init__(self, *args, **kwargs):
-        super().__init__(layout=VLayout(), *args, **kwargs)
+        super().__init__(layout=HLayout(spacing=15), *args, **kwargs)
         layout = self.layout
-        self.btn1 = Button(text='Click me', classes=['my_button'])
-        self.btn1.size_policy = (SizePolicy.EXPANDING, SizePolicy.EXPANDING)
-        self.btn1.variant = Variant.SECONDARY
-        layout.add_widget(self.btn1)
-        self.btn2 = Button(text='Don\'t click here')
-        layout.add_widget(self.btn2, position=InsertPosition.FIRST)
-        self.btn3 = Button(text='Click there')
-        self.btn3.variant = Variant.MUTED
-        layout.add_widget(self.btn3, index=1)
-        layout.size_policy =(SizePolicy.EXPANDING, SizePolicy.EXPANDING)
-        layout.minimum_size = Size(500, 500)
-        layout.spacing = 10
-        self.btn_4 = Button(text='hello', classes=['--class-hello'])
+        #self.layout.size_policy = (SizePolicy.EXPANDING, SizePolicy.EXPANDING)
+        #self.layout.horizontal_alignment = LayoutAlignment.START
+        #self.layout.vertical_alignment = LayoutAlignment.START
+        #self.layout.minimum_size = Size(500, 1500)
 
-        self.btn1.clicked.connect(lambda: self.on_btn1_clicked(self.btn1))
-        #self.btn2.clicked.connect(self.on_btn2_clicked)
-        #self.btn3.clicked.connect(self.on_btn3_clicked)
+        self.layout_1 = VLayout(parent=self.layout, spacing=10)
+        self.layout_2 = VLayout(parent=self.layout)
 
-    def on_btn1_clicked(self, btn):
-        btn.text = 'asdf'
-        btn.variant = Variant.SUCCESS
+        self.btn_1 = Button(text='Button1', parent=self.layout_1)
+        self.btn_2 = Button(text='Button2', parent=self.layout_1)
+        self.btn_3 = Button(text='Button3', parent=self.layout_2)
+        self.btn_4 = Button(text='Button4', parent=self.layout_2)
 
-        self.btn_4.text = 'hello world'
-        self.layout.add_widget(self.btn_4)
-        self.btn_4.text = 'hello world2'
-        #self.btn_4.remove_class('--class-hello')
+        #self.layout_1.size_policy = (SizePolicy.EXPANDING, SizePolicy.EXPANDING)
+        #self.layout_1.minimum_size = Size(300, 600)
+        for btn in [self.btn_1]:
+            btn.size_policy = (SizePolicy.FIXED, SizePolicy.EXPANDING)
 
-    def on_btn2_clicked(self):
-        pass
+        self.btn_1.parent_changed.connect(self._on_btn_1_parent_changed)
+        self.btn_3.clicked.connect(self._on_btn_3_clicked)
 
-    def on_btn3_clicked(self):
-        self.btn3.test_signal.emit('asdf')
+
+    def _on_btn_1_parent_changed(self, old, new):
+        self.btn_1.text = 'Button1 CHANGED'
+        self.btn_1.variant = Button.SUCCESS
+
+    def _on_btn_3_clicked(self):
+        self.btn_3.text = 'clicked'
+        self.btn_3.variant = Button.SUCCESS
+        self.layout_2.add_widget(self.btn_1)
 
 app = App()
 app.window = MyWindow

@@ -233,7 +233,7 @@ class PatchOp(StrEnum):
     REMOVE_CLASS = 'remove_class'
     
 class SizePolicy(StrEnum):
-    EXPANDING = '1 1 0'
+    EXPANDING = '1 1 auto'
     FIXED = '0 0 auto'
     MINIMUM = '0 1 auto'
     PREFERRED = '0 1 auto'

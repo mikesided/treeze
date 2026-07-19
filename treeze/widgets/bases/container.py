@@ -37,6 +37,10 @@ class Container(Widget, ABC):
         Adds a child widget to the container
         If index is specified, the position's InsertPosition is ignored
         """
+        # Validate if the widget already has a parent, if so remove it
+        if widget.parent:
+            widget.parent.remove_widget(widget)
+            
         index = Validator.ensure(index, int, None)
         widget = Validator.ensure(widget, Widget)
 

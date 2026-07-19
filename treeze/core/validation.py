@@ -8,7 +8,7 @@ Description:  Validation checks
 from __future__ import annotations
 from typing import Any
 
-from .exceptions import TreezeTypeError
+from .exceptions import TreezeTypeError, TreezeValueError
 
 # ______________________________________________________________________________________________________________________
 
@@ -44,3 +44,60 @@ class Validator:
             raise TreezeTypeError(f'Expected {names}, got {type(value).__name__}')
         
         return value
+    
+    @staticmethod
+    def validate_spacing(spacing: int) -> int:
+        """Spacing cannot be negative"""
+        spacing = Validator.ensure(spacing, int)
+
+        if spacing < 0:
+            raise TreezeValueError('Spacing cannot be negative.')
+
+        return spacing
+    
+    @staticmethod
+    def validate_margin(margin: int | tuple[int, int, int, int]) -> tuple[int, int, int, int]:
+        """Margins must return a tuple[int, int, int, int] but supports a single int"""
+        if isinstance(margin, tuple):
+            if len(margin) != 4:
+                raise TreezeValueError('Margin must contain 4 values')
+        elif isinstance(margin, int):
+            margin = (margin, margin, margin, margin)
+
+        margin = Validator.ensure(margin, tuple)
+
+        if not all(
+            isinstance(_, int) for _ in margin
+        ):
+            raise TreezeTypeError('Margin must be integers')
+        
+        if not all(
+            _ >= 0 for _ in margin
+        ):
+            raise TreezeValueError('Margin cannot be negative')
+
+        return margin
+    
+    @staticmethod
+    def validate_padding(padding: int | tuple[int, int, int, int]) -> tuple[int, int, int, int]:
+        """Paddings must return a tuple[int, int, int, int] but supports a single int"""
+        if isinstance(padding, tuple):
+            if len(padding) != 4:
+                raise TreezeValueError('Padding must contain 4 values')
+        elif isinstance(padding, int):
+            padding = (padding, padding, padding, padding)
+
+        padding = Validator.ensure(padding, tuple)
+
+        if not all(
+            isinstance(_, int) for _ in padding
+        ):
+            raise TreezeTypeError('Padding must be integers')
+        
+        if not all(
+            _ >= 0 for _ in padding
+        ):
+            raise TreezeValueError('Padding cannot be negative')
+
+        return padding
+

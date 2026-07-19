@@ -1,6 +1,6 @@
 """
-Name:         v_layout.py
-Description:  Vertical layout
+Name:         h_layout.py
+Description:  Horizontal Layout
 
 """
 # ______________________________________________________________________________________________________________________
@@ -14,20 +14,20 @@ from ...core.node import Node
 
 # ______________________________________________________________________________________________________________________
 
-class VLayout(Layout, ABC):
+class HLayout(Layout, ABC):
 
-    _CSS_CLASS = 'tz-vertical-layout'
-    _ORIENTATION = Orientation.VERTICAL
+    _CSS_CLASS = 'tz-horizontal-layout'
+    _ORIENTATION = Orientation.HORIZONTAL
 
     def _styles(self) -> dict[str, str]:
         styles = super()._styles()
         styles.update({
-            'justify-content': self.vertical_alignment.value,
-            'align-items': self.horizontal_alignment.value,
+            'align-items': self.vertical_alignment.value,
+            'justify-content': self.horizontal_alignment.value,
         })
             
         return styles
-
+    
     def _render(self) -> Node:
         node = Node(
             id=self.id,

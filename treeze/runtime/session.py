@@ -117,7 +117,7 @@ class Session:
         self._index_widgets()
         self._patch_engine.capture_tree(node_tree)
 
-        self._dirty_widgets.clear()
+        self._clear_dirty_state()
 
         return node_tree
 
@@ -153,10 +153,13 @@ class Session:
                         self._dirty_widgets,
                     )
 
+                    import pprint
+                    pprint.pprint(patches)
+
                     for widget in self._dirty_widgets:
                         widget._mark_clean()
 
-                    self._dirty_widgets.clear()
+                    self._clear_dirty_state()
 
                     return patches
 
@@ -200,3 +203,8 @@ class Session:
 
         self._dirty_widgets.add(widget)
 
+    def _clear_dirty_state(self) -> None:
+        for widget in self._widgets.values():
+            widget._mark_clean()
+
+        self._dirty_widgets.clear()

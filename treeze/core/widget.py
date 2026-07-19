@@ -88,10 +88,16 @@ class Widget(ABC):
     _ORIENTATION: Orientation | None = None  # Orientation forced by this widget (mostly used by layouts)
 
     # SIGNALS
-    parent_changed = Signal(Widget, Widget)
+    parent_changed = Signal(object, object)  # (Old parent container widget, New parent container widget)
+    visibility_changed = Signal(bool)  # (isVisible?)  # TODO: implement actual vis API
+    enabled_changed = Signal(bool)  # (isEnabled?)  # TODO: implement actual enabled API
 
     def __init__(
             self, 
+            
+            margin: int | tuple[int, int, int, int] | None = None,
+            padding: int | tuple[int, int, int, int] | None = None,
+
             variant: Variant = Variant.DEFAULT,
             parent: Container | None = None,
             classes: list[str] = []
@@ -111,6 +117,8 @@ class Widget(ABC):
         self._signals: dict[str, BoundSignal] = {}
 
         self._container_orientation: Orientation | None = None  # Maintained by `_set_parent`: holds the container's orientation
+        self.margin = margin
+        self.padding = padding
         self.horizontal_size_policy = SizePolicy.PREFERRED
         self.vertical_size_policy = SizePolicy.PREFERRED
         self.minimum_size = None
@@ -186,6 +194,22 @@ class Widget(ABC):
         """Convenience wrapper around horizontal & vertical size policies"""
         self.horizontal_size_policy = size_policies[0]
         self.vertical_size_policy = size_policies[1]
+
+    @property
+    def margin(self) -> tuple[int, int, int, int]:
+        return self._margin
+    
+    @margin.setter
+    def margin(self, margin: int | tuple[int, int, int, int] | None):
+        self._margin = None if margin is None else Validator.validate_margin(margin)
+
+    @property
+    def padding(self) -> tuple[int, int, int, int]:
+        return self._padding
+    
+    @padding.setter
+    def padding(self, padding: int | tuple[int, int, int, int] | None):
+        self._padding = None if padding is None else Validator.validate_padding(padding)
         
     @property
     def horizontal_size_policy(self) -> SizePolicy:
@@ -266,9 +290,14 @@ class Widget(ABC):
         Sets a new parent on the widget.
         Exposed for container to call when capturing ownership
         """
+        old_parent = self._parent
+
         widget = Validator.ensure(widget, Widget, None)
         self._parent = widget
         self._container_orientation = widget._ORIENTATION if widget else None
+
+        # Emit parent_changed signal
+        self.parent_changed.emit(old_parent, self._parent)
 
     def _walk_widgets(self):
         """Yield any widgets owned by this widget. Used for event callback."""
@@ -430,6 +459,14 @@ class Widget(ABC):
             styles['width'] = f'{self.fixed_size.width}px'
             styles['height'] = f'{self.fixed_size.height}px'
 
+        if self.margin is not None:
+            top, right, bottom, left = self.margin
+            styles['margin'] = f'{top}px {right}px {bottom}px {left}px'
+
+        if self.padding is not None:
+            top, right, bottom, left = self.padding
+            styles['padding'] = f'{top}px {right}px {bottom}px {left}px'
+
         return styles
     
     def _styles_size_policy(self) -> dict[str, str]:
@@ -449,29 +486,17 @@ class Widget(ABC):
                 raise ValueError(f'Unsupported container orientation: {self._container_orientation!r}')
         
         # Map main axis to flex data
-        match main_axis_size_policy:
-            case SizePolicy.FIXED:
-                main = '0 0 auto'
-            case SizePolicy.MINIMUM | SizePolicy.PREFERRED:
-                main = '0 1 auto'
-            case SizePolicy.EXPANDING:
-                main = '1 1 0'
-            case _:
-                raise ValueError(f'Unsupported main axis size policy: {main_axis_size_policy!r}')
+        styles['flex'] = main_axis_size_policy.value
 
         # Map cross axis to align-self
         match cross_axis_size_policy:
             case SizePolicy.EXPANDING:
-                cross = 'stretch'
+                styles['align-self'] = 'stretch'
             case SizePolicy.FIXED | SizePolicy.MINIMUM | SizePolicy.PREFERRED:
-                cross = 'flex-start'
+                pass
             case _:
                 raise ValueError(f'Unsupported cross axis size policy: {cross_axis_size_policy!r}')
         
-        # Update styles
-        styles['flex'] = main
-        styles['align-self'] = cross
-
         return styles
     
     @abstractmethod
