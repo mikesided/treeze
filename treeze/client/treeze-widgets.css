@@ -13,18 +13,21 @@ body {
 
 body {
     min-height: 100vh;
-    min-width: 100vw;
+    width: 100%;
 }
 
 #tz-root {
     display: flex;
+    width: 100%;
+    min-height: 100vh;
 }
 
 .tz-app {
     box-sizing: border-box;
     display: flex;
+    flex: 1 1 auto;
 
-    min-width: 100vw;
+    width: 100%;
     min-height: 100vh;
 
     margin: 0;
@@ -38,14 +41,16 @@ body {
 }
 
 .tz-window {
-    min-width: 100vw;
+    width: 100%;
     min-height: 100vh;
     display: flex;
+    flex: 1 1 auto;
 }
 
 .tz-window > .tz-layout {
-    flex: 1 1 0;
+    flex: 1 1 auto;
     align-self: stretch;
+    min-width: 0;
 }
 
 .tz-widget {
