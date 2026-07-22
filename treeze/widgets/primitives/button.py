@@ -5,7 +5,7 @@ Description:  Base class for a Button widget
 """
 # ______________________________________________________________________________________________________________________
 # Imports
-from ...core.enums import BrowserEvent, Variant
+from ...core.enums import BrowserEvent, ButtonStyle
 from ...core.events import EventBinding
 from ...core.node import Node
 from ...core.signals import Signal
@@ -15,17 +15,9 @@ from ...core.widget import Widget
 
 class Button(Widget):
 
+    _STYLE_TYPE = ButtonStyle
+    _DEFAULT_STYLE = ButtonStyle.FILLED
     _CSS_CLASS = 'tz-button'
-    _SUPPORTED_VARIANTS = (
-        Variant.PRIMARY,
-        Variant.SECONDARY,
-        Variant.TERTIARY,
-        Variant.SUCCESS,
-        Variant.WARNING,
-        Variant.DANGER,
-        Variant.INFO,
-        Variant.MUTED,
-    )
 
     clicked = Signal()
     def __init__(self, text: str, *args, **kwargs):

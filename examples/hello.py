@@ -30,9 +30,11 @@ class MyWindow(Window):
         self.layout.size_policy = (SizePolicy.EXPANDING, SizePolicy.EXPANDING)
 
         self.header_layout = HLayout(parent=self.layout)
+        self.header_layout.style = LayoutStyle.TRANSPARENT
         self.header_layout.size_policy = (SizePolicy.EXPANDING, SizePolicy.FIXED)
 
         self.main_layout = HLayout(parent=self.layout)
+        self.main_layout.variant = Variant.SUCCESS
         self.main_layout.size_policy = (SizePolicy.EXPANDING, SizePolicy.EXPANDING)
 
         self.nav_layout = VLayout(parent=self.main_layout)
@@ -43,7 +45,7 @@ class MyWindow(Window):
         self.body_layout.size_policy = (SizePolicy.EXPANDING, SizePolicy.EXPANDING)
 
         # Header Layout
-        self.header_layout.add_widget(Button('Logo'))
+        self.header_layout.add_widget(Button('Logo', classes=['my-button', 'my-button2']))
         self.header_layout.add_widget(Button('tab 1'))
         self.header_layout.add_widget(Button('tab 2'))
         self.header_layout.add_widget(Button('tab 3'))

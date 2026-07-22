@@ -9,6 +9,13 @@ from enum import StrEnum, Enum, auto
 
 # ______________________________________________________________________________________________________________________
 
+class ButtonStyle(StrEnum):
+    FILLED = 'filled'
+    OUTLINED = 'outlined'
+    SOFT = 'soft'
+    GHOST = 'ghost'
+    LINK = 'link'
+
 class BrowserEvent(StrEnum):
     CLICK = 'click'
 
@@ -205,6 +212,14 @@ class LayoutAlignment(StrEnum):
     START = 'flex-start'
     CENTER = 'center'
     END = 'flex-end'
+
+class LayoutStyle(StrEnum):
+    ELEVATED = 'elevated'
+    OUTLINED = 'outlined'
+    PANEL = 'panel'
+    PLAIN = 'plain'
+    ROUNDED = 'rounded'
+    TRANSPARENT = 'transparent'
 
 class InsertPosition(StrEnum):
     FIRST = 'first'

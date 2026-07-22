@@ -9,14 +9,18 @@ from abc import ABC, abstractmethod
 
 from ..bases.layout import Layout
 
-from ...core.enums import Orientation
+from ...core.enums import Orientation, LayoutStyle
 from ...core.node import Node
 
 # ______________________________________________________________________________________________________________________
 
 class VLayout(Layout, ABC):
 
-    _CSS_CLASS = 'tz-vertical-layout'
+    _CSS_CLASS = 'tz-layout-vertical'
+    _STYLE_TYPE = LayoutStyle
+    _DEFAULT_STYLE = LayoutStyle.PLAIN
+    _STYLE_PREFIX = 'tz-layout'
+    _VARIANT_PREFIX = 'tz-layout'
     _ORIENTATION = Orientation.VERTICAL
 
     def _styles(self) -> dict[str, str]:

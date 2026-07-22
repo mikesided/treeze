@@ -37,6 +37,7 @@ def _allow_window_construction() -> Iterator[None]:
 
 class Window(Widget):
 
+    _SUPPORTED_VARIANTS = ()
     _CSS_CLASS = 'tz-window'
     def __init__(
             self,

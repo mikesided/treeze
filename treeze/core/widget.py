@@ -6,12 +6,13 @@ Description:  A Widget is a high level UI element that renders into various node
 # ______________________________________________________________________________________________________________________
 # Imports
 from __future__ import annotations
+from enum import StrEnum
 from typing import Any, ClassVar, TYPE_CHECKING
 from abc import ABC, abstractmethod
 from itertools import count
 
 from .enums import Orientation, SizePolicy, Variant
-from .exceptions import TreezeValueError, TreezeRuntimeError
+from .exceptions import TreezeValueError, TreezeRuntimeError, TreezeTypeError
 from .signals import BoundSignal, Signal
 from .types.size import Size
 from .validation import Validator
@@ -66,22 +67,25 @@ class Widget(ABC):
     
 
     """
-    # TODO: parent_changed signal (old, new)
-
-    DEFAULT = Variant.DEFAULT
-    PRIMARY = Variant.PRIMARY
-    SECONDARY = Variant.SECONDARY
-    TERTIARY = Variant.TERTIARY
-    SUCCESS = Variant.SUCCESS
-    WARNING = Variant.WARNING
-    DANGER = Variant.DANGER
-    INFO = Variant.INFO
 
     # DEFINTIONS
     _CSS_CLASS: ClassVar[str | None] = 'tz-widget'
     _CSS_CLASSES: ClassVar[tuple[str, ...]] = ()
-    _SUPPORTED_VARIANTS: ClassVar[tuple[Variant, ...]] = (Variant.DEFAULT)
     _DIRTY_PRIVATE_ATTRIBUTES: set[str] = set()  # Attributes in here will mark the widget dirty on update
+    _STYLE_TYPE: ClassVar[type[StrEnum] | None] = None 
+    _DEFAULT_STYLE: ClassVar[StrEnum | None] = None  # If a style type is set, we must declare a default
+    _STYLE_PREFIX: ClassVar[str | None] = None  # Defaults to using the _CSS_CLASS as prefix
+    _VARIANT_PREFIX: ClassVar[str | None] = None  # Defaults to using the _CSS_CLASS as prefix
+    _SUPPORTED_VARIANTS: ClassVar[tuple[Variant, ...]] = (
+        Variant.PRIMARY,
+        Variant.SECONDARY,
+        Variant.TERTIARY,
+        Variant.SUCCESS,
+        Variant.WARNING,
+        Variant.DANGER,
+        Variant.INFO,
+        Variant.MUTED,
+    )  # All variants are supported on all widgets by default. Override to support a subset
 
     # BEHAVIOR
     _CHILDHOST: bool = False  # Can this widget host children?
@@ -99,6 +103,7 @@ class Widget(ABC):
             padding: int | tuple[int, int, int, int] | None = None,
 
             variant: Variant = Variant.DEFAULT,
+            style: StrEnum = _DEFAULT_STYLE,
             parent: Container | None = None,
             classes: list[str] = []
         ):
@@ -112,6 +117,7 @@ class Widget(ABC):
 
         # Framework properties
         self.variant = variant
+        self.style = style
         self._extra_classes : list[str] = []  # Holds user-defined classes
         self._parent: Container | None = None
         self._signals: dict[str, BoundSignal] = {}
@@ -184,6 +190,23 @@ class Widget(ABC):
             )
 
         self._variant = variant
+
+    @property
+    def style(self) -> StrEnum | None:
+        return self._style
+
+    @style.setter
+    def style(self, style: StrEnum) -> None:
+        if not hasattr(self, '_style'):
+            self._style = None
+            
+        style = self._resolve_widget_style(style)
+
+        if self._style is style:
+            return
+
+        self._style = style
+        self._mark_dirty()
 
     @property
     def size_policy(self) -> tuple[SizePolicy, SizePolicy]:
@@ -409,6 +432,7 @@ class Widget(ABC):
     # ==========================================================================
     #  Rendering
     # ==========================================================================
+    
 
     def _classes(self) -> list[str]:
         main_css_class = type(self)._CSS_CLASS
@@ -417,7 +441,7 @@ class Widget(ABC):
     
         classes: list[str] = []
 
-        # Collect main classes + extra framework classes from base -> subclass.
+        # Collect main classes + extra framework classes from base -> subclass
         for cls in reversed(type(self).mro()):
             css_class = cls.__dict__.get('_CSS_CLASS')
 
@@ -430,15 +454,28 @@ class Widget(ABC):
                 if css_class not in classes:
                     classes.append(css_class)
 
-        # Add variant class.
+        # Add variant class
         if self.variant != Variant.DEFAULT:
-            classes.append(f'{main_css_class}-{self.variant}')
+            if type(self)._VARIANT_PREFIX:
+                prefix = type(self)._VARIANT_PREFIX
+            else:
+                prefix = main_css_class
+            classes.append(f'{prefix}-{self.variant}')
 
-        # Add user-defined classes.
+        # Add style class
+        if self._style is not None:
+            if type(self)._STYLE_PREFIX:
+                prefix = type(self)._STYLE_PREFIX
+            else:
+                prefix = main_css_class
+            classes.append(f'{prefix}-{self._style}')
+
+        # Add user-defined classes
         for css_class in self._extra_classes:
             if css_class not in classes:
                 classes.append(css_class)
 
+        print(classes)
         return classes
 
     def _styles(self) -> dict[str, str]:
@@ -498,12 +535,12 @@ class Widget(ABC):
                 raise ValueError(f'Unsupported cross axis size policy: {cross_axis_size_policy!r}')
         
         return styles
+
     
     @abstractmethod
     def _render(self) -> Node:
         """Render method to implement in each widget"""
         raise NotImplementedError
-
 
     def _build(self) -> Node:
         """Render as a node, retain and return"""
@@ -519,6 +556,27 @@ class Widget(ABC):
     # ==========================================================================
     #  Internal
     # ==========================================================================
+
+    def _resolve_widget_style(self, style: StrEnum | None) -> StrEnum | None:
+        style_type = type(self)._STYLE_TYPE
+        default_style = type(self)._DEFAULT_STYLE
+
+        if style_type is None:
+            if style is not None:
+                raise TreezeTypeError(f'{type(self).__name__} does not support styles.')
+
+            return None
+
+        if style is None:
+            return default_style
+
+        if not isinstance(style, style_type):
+            raise TreezeTypeError(
+                f'{type(self).__name__}.style must be an instance of '
+                f'{style_type.__name__}, not {type(style).__name__}.'
+            )
+
+        return style
 
     @classmethod
     def _dirty_private_attributes(cls) -> set[str]:

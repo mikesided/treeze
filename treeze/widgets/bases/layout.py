@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 
 from .container import Container
 
-from ...core.enums import LayoutAlignment
+from ...core.enums import LayoutAlignment, LayoutStyle
 from ...core.node import Node
 from ...core.validation import Validator
 

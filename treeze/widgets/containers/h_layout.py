@@ -9,14 +9,18 @@ from abc import ABC, abstractmethod
 
 from ..bases.layout import Layout
 
-from ...core.enums import Orientation
+from ...core.enums import Orientation, LayoutStyle
 from ...core.node import Node
 
 # ______________________________________________________________________________________________________________________
 
 class HLayout(Layout, ABC):
 
-    _CSS_CLASS = 'tz-horizontal-layout'
+    _CSS_CLASS = 'tz-layout-horizontal'
+    _STYLE_TYPE = LayoutStyle
+    _DEFAULT_STYLE = LayoutStyle.PLAIN
+    _STYLE_PREFIX = 'tz-layout'
+    _VARIANT_PREFIX = 'tz-layout'
     _ORIENTATION = Orientation.HORIZONTAL
 
     def _styles(self) -> dict[str, str]:

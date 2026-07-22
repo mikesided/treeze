@@ -12,8 +12,9 @@ from ...core.widget import Widget
 # ______________________________________________________________________________________________________________________
 
 class Spacer(Widget):
-    _CSS_CLASS = 'tz-spacer'
 
+    _SUPPORTED_VARIANTS = ()
+    _CSS_CLASS = 'tz-spacer'
     def _render(self) -> Node:
         return Node(
             id=self.id,
