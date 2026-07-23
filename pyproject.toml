@@ -40,10 +40,12 @@ include = [
 
 [tool.setuptools.package-data]
 treeze = [
-    "client/*.js",
-    "client/*.html",
-    "client/*.css"
+    "client/static/*.js",
+    "client/static/**/*.css",
 ]
+
+[tool.setuptools]
+include-package-data = true
 
 
 [tool.pytest.ini_options]
