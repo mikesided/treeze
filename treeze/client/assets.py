@@ -14,8 +14,10 @@ CSS_DIRECTORY = STATIC_DIRECTORY / 'css'
 
 
 def discover_stylesheets() -> tuple[str, ...]:
-    core_stylesheets = (
-        (CSS_DIRECTORY / 'core').glob('*.css')
+    core_stylesheets = sorted(
+        (
+            (CSS_DIRECTORY / 'core').glob('*.css')
+        )
     )
 
     component_stylesheets = sorted(
