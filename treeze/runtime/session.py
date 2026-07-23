@@ -153,9 +153,6 @@ class Session:
                         self._dirty_widgets,
                     )
 
-                    import pprint
-                    pprint.pprint(patches)
-
                     for widget in self._dirty_widgets:
                         widget._mark_clean()
 

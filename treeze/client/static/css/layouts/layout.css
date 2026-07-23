@@ -1,0 +1,13 @@
+.tz-layout {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+}
+
+.tz-layout-horizontal {
+    flex-direction: row;
+}
+
+.tz-layout-vertical {
+    flex-direction: column;
+}

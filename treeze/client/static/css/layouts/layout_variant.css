@@ -1,0 +1,47 @@
+.tz-layout-primary {
+    color: var(--tz-color-on-primary);
+    background: var(--tz-color-primary);
+    border-color: var(--tz-color-primary-active);
+}
+
+.tz-layout-secondary {
+    color: var(--tz-color-on-secondary);
+    background: var(--tz-color-secondary);
+    border-color: var(--tz-color-secondary-active);
+}
+
+.tz-layout-tertiary {
+    color: var(--tz-color-on-tertiary);
+    background: var(--tz-color-tertiary);
+    border-color: var(--tz-color-tertiary-active);
+}
+
+.tz-layout-success {
+    color: var(--tz-color-on-success);
+    background: var(--tz-color-success);
+    border-color: var(--tz-color-success-active);
+}
+
+.tz-layout-warning {
+    color: var(--tz-color-on-warning);
+    background: var(--tz-color-warning);
+    border-color: var(--tz-color-warning-active);
+}
+
+.tz-layout-danger {
+    color: var(--tz-color-on-danger);
+    background: var(--tz-color-danger);
+    border-color: var(--tz-color-danger-active);
+}
+
+.tz-layout-info {
+    color: var(--tz-color-on-info);
+    background: var(--tz-color-info);
+    border-color: var(--tz-color-info-active);
+}
+
+.tz-layout-muted {
+    color: var(--tz-color-text-muted);
+    background: var(--tz-color-surface-hover);
+    border-color: var(--tz-color-border);
+}

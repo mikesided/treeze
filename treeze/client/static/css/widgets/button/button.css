@@ -1,0 +1,50 @@
+.tz-button {
+    appearance: none;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 6px 12px;
+
+    font: inherit;
+    line-height: var(--tz-line-height);
+
+    color: var(--tz-color-text);
+    background: var(--tz-color-surface);
+
+    border: 1px solid var(--tz-color-border);
+    border-radius: var(--tz-radius-md);
+
+    cursor: pointer;
+    user-select: none;
+
+    transition:
+        background-color 120ms ease,
+        border-color 120ms ease,
+        color 120ms ease,
+        box-shadow 120ms ease;
+}
+
+.tz-button:hover {
+    background: var(--tz-color-surface-hover);
+    border-color: var(--tz-color-border-hover);
+}
+
+.tz-button:active {
+    background: var(--tz-color-surface-active);
+    border-color: var(--tz-color-border-strong);
+}
+
+.tz-button:focus-visible {
+    outline: 2px solid var(--tz-color-focus);
+    outline-offset: 2px;
+}
+
+.tz-button:disabled {
+    color: var(--tz-color-on-disabled);
+    background: var(--tz-color-disabled);
+    border-color: var(--tz-color-disabled-border);
+
+    cursor: default;
+}

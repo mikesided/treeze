@@ -2,7 +2,8 @@
 Name:         asgi.py
 Description:  ASGI application factory
 """
-
+# ______________________________________________________________________________________________________________________
+# Imports
 from __future__ import annotations
 
 from pathlib import Path
@@ -10,7 +11,7 @@ from typing import TYPE_CHECKING
 import traceback
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from .protocol import (
@@ -19,11 +20,15 @@ from .protocol import (
     ServerRenderMessage,
 )
 
+from ..client.assets import STATIC_DIRECTORY
+from ..client.index import render_index
 from ..core.exceptions import TreezeError
 
 if TYPE_CHECKING:
     from .session import Session
     from ..core.app import App
+
+# ______________________________________________________________________________________________________________________
 
 
 CLIENT_DIR = Path(__file__).parents[1] / 'client'
@@ -34,13 +39,15 @@ def create_asgi_app(app: App) -> FastAPI:
 
     asgi_app.mount(
         '/static',
-        StaticFiles(directory=CLIENT_DIR),
+        StaticFiles(directory=STATIC_DIRECTORY),
         name='static',
     )
 
-    @asgi_app.get('/')
-    def index():
-        return FileResponse(CLIENT_DIR / 'index.html')
+    @asgi_app.get('/', response_class=HTMLResponse)
+    async def index() -> HTMLResponse:
+        return HTMLResponse(
+            content=render_index(),
+        )
 
     @asgi_app.websocket('/ws')
     async def websocket(ws: WebSocket):

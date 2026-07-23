@@ -1,0 +1,129 @@
+.tz-button-primary {
+    color: var(--tz-color-on-primary);
+    background: var(--tz-color-primary);
+    border-color: var(--tz-color-primary);
+}
+
+.tz-button-primary:hover {
+    background: var(--tz-color-primary-hover);
+    border-color: var(--tz-color-primary-hover);
+}
+
+.tz-button-primary:active {
+    background: var(--tz-color-primary-active);
+    border-color: var(--tz-color-primary-active);
+}
+
+.tz-button-secondary {
+    color: var(--tz-color-on-secondary);
+    background: var(--tz-color-secondary);
+    border-color: var(--tz-color-secondary);
+}
+
+.tz-button-secondary:hover {
+    background: var(--tz-color-secondary-hover);
+    border-color: var(--tz-color-secondary-hover);
+}
+
+.tz-button-secondary:active {
+    background: var(--tz-color-secondary-active);
+    border-color: var(--tz-color-secondary-active);
+}
+
+.tz-button-tertiary {
+    color: var(--tz-color-on-tertiary);
+    background: var(--tz-color-tertiary);
+    border-color: var(--tz-color-tertiary);
+}
+
+.tz-button-tertiary:hover {
+    background: var(--tz-color-tertiary-hover);
+    border-color: var(--tz-color-tertiary-hover);
+}
+
+.tz-button-tertiary:active {
+    background: var(--tz-color-tertiary-active);
+    border-color: var(--tz-color-tertiary-active);
+}
+
+.tz-button-success {
+    color: var(--tz-color-on-success);
+    background: var(--tz-color-success);
+    border-color: var(--tz-color-success);
+}
+
+.tz-button-success:hover {
+    background: var(--tz-color-success-hover);
+    border-color: var(--tz-color-success-hover);
+}
+
+.tz-button-success:active {
+    background: var(--tz-color-success-active);
+    border-color: var(--tz-color-success-active);
+}
+
+.tz-button-warning {
+    color: var(--tz-color-on-warning);
+    background: var(--tz-color-warning);
+    border-color: var(--tz-color-warning);
+}
+
+.tz-button-warning:hover {
+    background: var(--tz-color-warning-hover);
+    border-color: var(--tz-color-warning-hover);
+}
+
+.tz-button-warning:active {
+    background: var(--tz-color-warning-active);
+    border-color: var(--tz-color-warning-active);
+}
+
+.tz-button-danger {
+    color: var(--tz-color-on-danger);
+    background: var(--tz-color-danger);
+    border-color: var(--tz-color-danger);
+}
+
+.tz-button-danger:hover {
+    background: var(--tz-color-danger-hover);
+    border-color: var(--tz-color-danger-hover);
+}
+
+.tz-button-danger:active {
+    background: var(--tz-color-danger-active);
+    border-color: var(--tz-color-danger-active);
+}
+
+.tz-button-info {
+    color: var(--tz-color-on-info);
+    background: var(--tz-color-info);
+    border-color: var(--tz-color-info);
+}
+
+.tz-button-info:hover {
+    background: var(--tz-color-info-hover);
+    border-color: var(--tz-color-info-hover);
+}
+
+.tz-button-info:active {
+    background: var(--tz-color-info-active);
+    border-color: var(--tz-color-info-active);
+}
+
+.tz-button-muted {
+    color: var(--tz-color-text-muted);
+    background: transparent;
+    border-color: var(--tz-color-border);
+}
+
+.tz-button-muted:hover {
+    color: var(--tz-color-text);
+    background: var(--tz-color-surface-hover);
+    border-color: var(--tz-color-border-hover);
+}
+
+.tz-button-muted:active {
+    color: var(--tz-color-text);
+    background: var(--tz-color-surface-active);
+    border-color: var(--tz-color-border-strong);
+}
