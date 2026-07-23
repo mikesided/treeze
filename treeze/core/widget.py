@@ -129,6 +129,7 @@ class Widget(ABC):
         self.vertical_size_policy = SizePolicy.PREFERRED
         self.minimum_size = None
         self.maximum_size = None
+        self.fixed_size = None
 
         # Add classes
         for klass in classes:
@@ -249,31 +250,113 @@ class Widget(ABC):
     @vertical_size_policy.setter
     def vertical_size_policy(self, size_policy: SizePolicy):
         self._vertical_size_policy = Validator.ensure(size_policy, SizePolicy)
-    
+
+    @property
+    def minimum_width(self) -> int | None:
+        return self._minimum_width
+
+    @minimum_width.setter
+    def minimum_width(self, width: int | None):
+        self._minimum_width = width
+
+    @property
+    def minimum_height(self) -> int | None:
+        return self._minimum_height
+
+    @minimum_height.setter
+    def minimum_height(self, width: int | None):
+        self._minimum_height = width
+
     @property
     def minimum_size(self) -> Size | None:
-        return self._minimum_size
+        if isinstance(self.minimum_width, int) and isinstance(self.minimum_height, int):
+            return Size(self.minimum_width, self.minimum_height)
+        return None
     
     @minimum_size.setter
     def minimum_size(self, size: Size | None):
-        self._minimum_size = Validator.ensure(size, Size, None)
+        size = Validator.ensure(size, Size, None)
+        if size:
+            width = Validator.ensure(size.width, int)
+            height = Validator.ensure(size.height, int)
+        else:
+            width = None
+            height = None
+
+        self.minimum_width = width
+        self.minimum_height = height
+
+    @property
+    def fixed_width(self) -> int | None:
+        """Overrides minimum_width and maximum_width"""
+        return self._fixed_width
+
+    @fixed_width.setter
+    def fixed_width(self, width: int | None):
+        self._fixed_width = width
+
+    @property
+    def fixed_height(self) -> int | None:
+        """Overrides minimum_height and maximum_height"""
+        return self._fixed_height
+
+    @fixed_height.setter
+    def fixed_height(self, width: int | None):
+        self._fixed_height = width
 
     @property
     def fixed_size(self) -> Size | None:
-        return self.minimum_size if self.minimum_size == self.maximum_size else None
+        """Overrides minimum_size and maximum_size"""
+        if isinstance(self.fixed_width, int) and isinstance(self.fixed_height, int):
+            return Size(self.fixed_width, self.fixed_height)
     
     @fixed_size.setter
     def fixed_size(self, size: Size | None):
-        self.minimum_size = Validator.ensure(size, Size, None)
-        self.maximum_size = Validator.ensure(size, Size, None)
+        size = Validator.ensure(size, Size, None)
+        if size:
+            width = Validator.ensure(size.width, int)
+            height = Validator.ensure(size.height, int)
+        else:
+            width = None
+            height = None
+
+        self.fixed_width = width
+        self.fixed_height = height
+
+    @property
+    def maximum_width(self) -> int | None:
+        return self._maximum_width
+
+    @maximum_width.setter
+    def maximum_width(self, width: int | None):
+        self._maximum_width = width
+
+    @property
+    def maximum_height(self) -> int | None:
+        return self._maximum_height
+
+    @maximum_height.setter
+    def maximum_height(self, width: int | None):
+        self._maximum_height = width
     
     @property
     def maximum_size(self) -> Size | None:
-        return self._maximum_size
+        if isinstance(self.maximum_width, int) and isinstance(self.maximum_height, int):
+            return Size(self.maximum_width, self.maximum_height)
+        return None
     
     @maximum_size.setter
     def maximum_size(self, size: Size| None):
-        self._maximum_size = Validator.ensure(size, Size, None)
+        size = Validator.ensure(size, Size, None)
+        if size:
+            width = Validator.ensure(size.width, int)
+            height = Validator.ensure(size.height, int)
+        else:
+            width = None
+            height = None
+
+        self.maximum_width = width
+        self.maximum_height = height
 
         
     # ==========================================================================
@@ -475,7 +558,6 @@ class Widget(ABC):
             if css_class not in classes:
                 classes.append(css_class)
 
-        print(classes)
         return classes
 
     def _styles(self) -> dict[str, str]:
@@ -483,18 +565,22 @@ class Widget(ABC):
 
         # Size policies
         styles.update(self._styles_size_policy())
-            
-        if self.minimum_size:
-            styles['min-width'] = f'{self.minimum_size.width}px'
-            styles['min-height'] = f'{self.minimum_size.height}px'
 
-        if self.maximum_size:
-            styles['max-width'] = f'{self.maximum_size.width}px'
-            styles['max-height'] = f'{self.maximum_size.height}px'
+        if self.fixed_width:
+            styles['width'] = f'{self.fixed_width}px'
+        else:
+            if self.minimum_width:
+                styles['min-width'] = f'{self.minimum_width}px'
+            if self.maximum_width:
+                styles['max-width'] = f'{self.maximum_width}px'
 
-        if self.fixed_size:
-            styles['width'] = f'{self.fixed_size.width}px'
-            styles['height'] = f'{self.fixed_size.height}px'
+        if self.fixed_height:
+            styles['height'] = f'{self.fixed_height}px'
+        else:
+            if self.minimum_height:
+                styles['min-height'] = f'{self.minimum_height}px'
+            if self.maximum_height:
+                styles['max-height'] = f'{self.maximum_height}px'
 
         if self.margin is not None:
             top, right, bottom, left = self.margin
