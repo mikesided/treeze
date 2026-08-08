@@ -1,45 +1,49 @@
 """
-Name:         button.py
-Description:  Base class for a Button widget
-
+Name:         label.py
+Description:  Simple text label widget
 """
 # ______________________________________________________________________________________________________________________
 # Imports
-from ...core.enums import BrowserEvent, ButtonStyle
-from ...core.events import EventBinding
+from enum import StrEnum
+
+from ...core.enums import LabelStyle
 from ...core.node import Node
 from ...core.signals import Signal
+from ...core.validation import Validator
 from ...core.widget import Widget
 
 # ______________________________________________________________________________________________________________________
 
-class Button(Widget):
 
-    _STYLE_TYPE = ButtonStyle
-    _DEFAULT_STYLE = ButtonStyle.FILLED
-    _CSS_CLASS = 'tz-button'
+class Label(Widget):
 
-    clicked = Signal()
+    _CSS_CLASS = 'tz-label'
+    _STYLE_TYPE = LabelStyle
+    _DEFAULT_STYLE = LabelStyle.BODY
+
     def __init__(
-            self, 
-            text: str,
-            *args, 
-            **kwargs
+            self,
+            text: str = '',
+            *args,
+            **kwargs,
         ):
         super().__init__(*args, **kwargs)
-        self.text = text
+
+        self._text = Validator.ensure(text, str)
+
+    @property
+    def text(self) -> str:
+        return self._text
+
+    @text.setter
+    def text(self, text: str) -> None:
+        self._text = Validator.ensure(text, str)
 
     def _render(self) -> Node:
         return Node(
             id=self.id,
-            tag='button',
+            tag='span',
             text=self.text,
-            attributes={
-                'type': 'button',
-            },
             classes=self._classes(),
             styles=self._styles(),
-            events={
-                BrowserEvent.CLICK: EventBinding(signal='clicked'),
-            },
         )

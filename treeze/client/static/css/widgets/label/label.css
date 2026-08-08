@@ -1,0 +1,19 @@
+/*
+===============================================
+  Label
+===============================================
+*/
+
+.tz-label {
+    display: inline-block;
+    box-sizing: border-box;
+
+    margin: 0;
+
+    font-family: var(--tz-font-family);
+    color: var(--tz-color-text);
+
+    min-width: 0;
+
+    overflow-wrap: break-word;
+}

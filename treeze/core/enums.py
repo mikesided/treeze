@@ -208,6 +208,19 @@ class EventData(StrEnum):
     TEXT = 'text'
     VALUE = 'value'
 
+class LabelStyle(StrEnum):
+    BODY = 'body'
+    BODY_SMALL = 'body-small'
+
+    CAPTION = 'caption'
+    OVERLINE = 'overline'
+
+    HEADING_1 = 'heading-1'
+    HEADING_2 = 'heading-2'
+    HEADING_3 = 'heading-3'
+
+    CODE = 'code'
+    
 class LayoutAlignment(StrEnum):
     START = 'flex-start'
     CENTER = 'center'

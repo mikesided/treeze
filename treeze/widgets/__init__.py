@@ -11,6 +11,7 @@ from .containers.v_layout import VLayout
 from .containers.h_layout import HLayout
 
 from .primitives.button import Button
+from .primitives.label import Label, LabelStyle
 from .primitives.spacer import Spacer, HSpacer, VSpacer
 from .primitives.window import Window
 # ______________________________________________________________________________________________________________________

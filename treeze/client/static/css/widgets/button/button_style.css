@@ -1,0 +1,102 @@
+/*
+===============================================
+  Filled
+===============================================
+*/
+
+.tz-button-filled {
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+
+.tz-button-filled:hover {
+    box-shadow: 0 2px 4px rgb(0 0 0 / 0.12);
+}
+
+.tz-button-filled:active {
+    box-shadow: none;
+    transform: translateY(1px);
+}
+
+
+/*
+===============================================
+  Outlined
+===============================================
+*/
+
+.tz-button-outlined {
+    background: transparent;
+}
+
+.tz-button-outlined:hover {
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+}
+
+.tz-button-outlined:active {
+    box-shadow: none;
+    transform: translateY(1px);
+}
+
+
+/*
+===============================================
+  Soft
+===============================================
+*/
+
+.tz-button-soft {
+    border-color: transparent;
+    opacity: 0.85;
+}
+
+.tz-button-soft:hover {
+    opacity: 1;
+}
+
+.tz-button-soft:active {
+    transform: translateY(1px);
+}
+
+
+/*
+===============================================
+  Ghost
+===============================================
+*/
+
+.tz-button-ghost {
+    background: transparent;
+    border-color: transparent;
+}
+
+.tz-button-ghost:active {
+    transform: translateY(1px);
+}
+
+
+/*
+===============================================
+  Link
+===============================================
+*/
+
+.tz-button-link {
+    background: transparent;
+    border-color: transparent;
+
+    border-radius: 0;
+
+    padding-left: 2px;
+    padding-right: 2px;
+
+    box-shadow: none;
+}
+
+.tz-button-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.tz-button-link:active {
+    transform: translateY(1px);
+}

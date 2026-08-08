@@ -98,14 +98,29 @@ class Widget(ABC):
 
     def __init__(
             self, 
-            
+
+            variant: Variant = Variant.DEFAULT,
+            style: StrEnum | None = None,  # Default lives in cls._DEFAULT_STYLE
+
             margin: int | tuple[int, int, int, int] | None = None,
             padding: int | tuple[int, int, int, int] | None = None,
 
-            variant: Variant = Variant.DEFAULT,
-            style: StrEnum = _DEFAULT_STYLE,
+            size_policy: tuple[SizePolicy, SizePolicy] = (SizePolicy.PREFERRED, SizePolicy.PREFERRED),
+            horizontal_size_policy: SizePolicy = SizePolicy.PREFERRED,
+            vertical_size_policy: SizePolicy = SizePolicy.PREFERRED,
+
+            minimum_size: Size | None = None,
+            minimum_width: int | None = None,
+            minimum_height: int | None = None,
+            maximum_size: Size | None = None,
+            maximum_width: int | None = None,
+            maximum_height: int | None = None,
+            fixed_size: Size | None = None,
+            fixed_width: int | None = None,
+            fixed_height: int | None = None,
+            
+            classes: list[str] | None = None,
             parent: Container | None = None,
-            classes: list[str] = []
         ):
                 
         # Internal properties
@@ -114,25 +129,52 @@ class Widget(ABC):
         self._session: Session = None
         self._dirty: bool = False
         self._suspend_dirty_tracking: bool = False
-
-        # Framework properties
-        self.variant = variant
-        self.style = style
+        
+        self._signals: dict[str, BoundSignal] = {}
+        self._container_orientation: Orientation | None = None  # Maintained by `_set_parent`: holds the container's orientation
         self._extra_classes : list[str] = []  # Holds user-defined classes
         self._parent: Container | None = None
-        self._signals: dict[str, BoundSignal] = {}
 
-        self._container_orientation: Orientation | None = None  # Maintained by `_set_parent`: holds the container's orientation
+        # Private properties
+        self._variant: Variant = Variant.DEFAULT
+        self._style: StrEnum | None = None
+
+        self._margin: int | tuple[int, int, int, int] | None = None
+        self._padding: int | tuple[int, int, int, int] | None = None
+
+        self._horizontal_size_policy: SizePolicy = SizePolicy.PREFERRED
+        self._vertical_size_policy: SizePolicy = SizePolicy.PREFERRED
+
+        self._minimum_width: int | None = None
+        self._minimum_height: int | None = None
+        self._maximum_width: int | None = None
+        self._maximum_height: int | None = None
+        self._fixed_width: int | None = None
+        self._fixed_height: int | None = None
+
+        # Assign framework properties
+        self.variant = variant
+        self.style = style
+
         self.margin = margin
         self.padding = padding
-        self.horizontal_size_policy = SizePolicy.PREFERRED
-        self.vertical_size_policy = SizePolicy.PREFERRED
-        self.minimum_size = None
-        self.maximum_size = None
-        self.fixed_size = None
 
+        self.size_policy = size_policy
+        self.horizontal_size_policy = horizontal_size_policy
+        self.vertical_size_policy = vertical_size_policy
+
+        self.minimum_size = minimum_size
+        self.minimum_width = minimum_width
+        self.minimum_height = minimum_height
+        self.maximum_size = maximum_size
+        self.maximum_width = maximum_width
+        self.maximum_height = maximum_height
+        self.fixed_size = fixed_size
+        self.fixed_width = fixed_width
+        self.fixed_height = fixed_height
+        
         # Add classes
-        for klass in classes:
+        for klass in classes or ():
             self.add_class(klass)
 
         # Add Signals
@@ -197,27 +239,13 @@ class Widget(ABC):
         return self._style
 
     @style.setter
-    def style(self, style: StrEnum) -> None:
-        if not hasattr(self, '_style'):
-            self._style = None
-            
+    def style(self, style: StrEnum) -> None:            
         style = self._resolve_widget_style(style)
 
         if self._style is style:
             return
 
         self._style = style
-        self._mark_dirty()
-
-    @property
-    def size_policy(self) -> tuple[SizePolicy, SizePolicy]:
-        return (self.horizontal_size_policy, self.vertical_size_policy)
-
-    @size_policy.setter
-    def size_policy(self, size_policies: tuple[SizePolicy, SizePolicy]):
-        """Convenience wrapper around horizontal & vertical size policies"""
-        self.horizontal_size_policy = size_policies[0]
-        self.vertical_size_policy = size_policies[1]
 
     @property
     def margin(self) -> tuple[int, int, int, int]:
@@ -234,7 +262,17 @@ class Widget(ABC):
     @padding.setter
     def padding(self, padding: int | tuple[int, int, int, int] | None):
         self._padding = None if padding is None else Validator.validate_padding(padding)
-        
+
+    @property
+    def size_policy(self) -> tuple[SizePolicy, SizePolicy]:
+        return (self.horizontal_size_policy, self.vertical_size_policy)
+
+    @size_policy.setter
+    def size_policy(self, size_policies: tuple[SizePolicy, SizePolicy]):
+        """Convenience wrapper around horizontal & vertical size policies"""
+        self.horizontal_size_policy = size_policies[0]
+        self.vertical_size_policy = size_policies[1]
+
     @property
     def horizontal_size_policy(self) -> SizePolicy:
         return self._horizontal_size_policy
