@@ -105,7 +105,7 @@ class Widget(ABC):
             margin: int | tuple[int, int, int, int] | None = None,
             padding: int | tuple[int, int, int, int] | None = None,
 
-            size_policy: tuple[SizePolicy, SizePolicy] = (SizePolicy.PREFERRED, SizePolicy.PREFERRED),
+            size_policy: tuple[SizePolicy, SizePolicy] | None = None,
             horizontal_size_policy: SizePolicy = SizePolicy.PREFERRED,
             vertical_size_policy: SizePolicy = SizePolicy.PREFERRED,
 
@@ -159,19 +159,23 @@ class Widget(ABC):
         self.margin = margin
         self.padding = padding
 
-        self.size_policy = size_policy
         self.horizontal_size_policy = horizontal_size_policy
         self.vertical_size_policy = vertical_size_policy
+        if size_policy:
+            self.size_policy = size_policy
 
-        self.minimum_size = minimum_size
         self.minimum_width = minimum_width
         self.minimum_height = minimum_height
-        self.maximum_size = maximum_size
+        if minimum_size:
+            self.minimum_size = minimum_size
         self.maximum_width = maximum_width
         self.maximum_height = maximum_height
-        self.fixed_size = fixed_size
+        if maximum_size:
+            self.maximum_size = maximum_size
         self.fixed_width = fixed_width
         self.fixed_height = fixed_height
+        if fixed_size:
+            self.fixed_size = fixed_size
         
         # Add classes
         for klass in classes or ():
