@@ -42,22 +42,8 @@ from treeze.widgets import (
     Window,
 )
 
-
 # ______________________________________________________________________________________________________________________
-# Small demo widget showing that Treeze widgets can declare their own signals.
-class ActionButton(Button):
-    activated = Signal(str)
 
-    def __init__(self, text: str, action_name: str, *args, **kwargs):
-        super().__init__(text=text, *args, **kwargs)
-        self.action_name = action_name
-        self.clicked.connect(self._emit_activated)
-
-    def _emit_activated(self):
-        self.activated.emit(self.action_name)
-
-
-# ______________________________________________________________________________________________________________________
 class ShowcaseWindow(Window):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -329,12 +315,6 @@ class PatchesWidget(ContentWidget):
             self.layout_right.add_widget(widget)
 
 
-
-
-
-
-
-        
 class SignalsWidget(ContentWidget):
 
     def __init__(self, *args, **kwargs):
@@ -502,11 +482,11 @@ app = App(
 )
 
 # Granular theme overrides: these become CSS custom properties on the app root.
-#app.theme.font_family = 'Consolas'
-app.theme.font_size = 14
-app.theme.spacing = 8
-app.theme.radius_md = 10
-app.theme.radius_lg = 14
+# app.theme.font_family = 'Consolas'
+# app.theme.font_size = 14
+# app.theme.spacing = 8
+# app.theme.radius_md = 10
+# app.theme.radius_lg = 14
 
 # Color enum values can be used anywhere Theme accepts a color.
 #app.theme.primary = Color.BLUE_600
