@@ -11,15 +11,16 @@ from dataclasses import dataclass, field, fields
 from enum import StrEnum
 
 from ..exceptions import TreezeTypeError, TreezeValueError
+from .gradients import LinearGradient
 
 # ______________________________________________________________________________________________________________________
 
-CssColor: TypeAlias = str | StrEnum | None  # Converted to raw string
+CssColor: TypeAlias = str | StrEnum | LinearGradient | None
 CssLength: TypeAlias = str | int | float | None  # Converted to raw string or suffixed with 'px'
 CssNumber: TypeAlias = str | int | float | None  # Converted to raw string
 CssText: TypeAlias = str | None  # Converted to raw string
 
-CssValue: TypeAlias = str | int | float | StrEnum | None  # Combination of all values
+CssValue: TypeAlias = str | int | float | StrEnum | LinearGradient | None
 
 
 # ______________________________________________________________________________________________________________________
@@ -223,8 +224,8 @@ class Theme:
 
         match css_kind:
             case 'color':
-                if not isinstance(value, str | StrEnum):
-                    raise TreezeTypeError(f'Theme color {name!r} must be a string, Color, or None.')
+                if not isinstance(value, str | StrEnum | LinearGradient):
+                    raise TreezeTypeError(f'Theme color {name!r} must be a string, Color, LinearGradient, or None.')
 
                 return str(value)
 
@@ -254,4 +255,3 @@ class Theme:
 
             case _:
                 raise RuntimeError(f'Unsupported CSS kind: {css_kind!r}')
-            

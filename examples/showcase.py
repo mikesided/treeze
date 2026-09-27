@@ -31,6 +31,7 @@ from treeze.core.enums import (
 )
 from treeze.core.signals import Signal
 from treeze.core.types.size import Size
+from treeze.core.types.gradients import LinearGradient
 from treeze.widgets import (
     Button,
     HLayout,
@@ -206,9 +207,6 @@ class HomeWidget(ContentWidget):
 
         self.add_widget(Label('Welcome to treeze\'s showcase page!', style=LabelStyle.HEADING_1))
 
-        w = Image(source='/resources/helloworld.png')
-
-        self.add_widget(w)
 
 class LayoutsWidget(ContentWidget):
 
@@ -496,7 +494,6 @@ app = App(
 #app.theme.primary = Color.BLUE_600
 app.theme.tertiary = Color.DARK_SLATE
 app.theme.on_tertiary = Color.LIME_500
-
 
 if __name__ == "__main__":
     app.run()

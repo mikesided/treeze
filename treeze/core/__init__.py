@@ -26,7 +26,7 @@ from .exceptions import (
 )
 
 from .types.size import Size
+from .types.gradients import LinearGradient
 from .types.theme import Theme
 
 # ______________________________________________________________________________________________________________________
-
