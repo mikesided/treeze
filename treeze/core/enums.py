@@ -234,6 +234,10 @@ class LayoutStyle(StrEnum):
     ROUNDED = 'rounded'
     TRANSPARENT = 'transparent'
 
+class ImageStyle(StrEnum):
+    FIT = 'fit'
+    FIXED = 'fixed'
+
 class InsertPosition(StrEnum):
     FIRST = 'first'
     LAST = 'last'

@@ -36,6 +36,7 @@ from treeze.widgets import (
     HLayout,
     HSpacer,
     Label,
+    Image,
     Spacer,
     VLayout,
     VSpacer,
@@ -205,6 +206,9 @@ class HomeWidget(ContentWidget):
 
         self.add_widget(Label('Welcome to treeze\'s showcase page!', style=LabelStyle.HEADING_1))
 
+        w = Image(source='/resources/helloworld.png')
+
+        self.add_widget(w)
 
 class LayoutsWidget(ContentWidget):
 

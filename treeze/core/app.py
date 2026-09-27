@@ -6,6 +6,8 @@ Description:  Main app class
 # ______________________________________________________________________________________________________________________
 # Imports
 from __future__ import annotations
+import inspect
+from pathlib import Path
 from typing import TYPE_CHECKING
 import uuid
 
@@ -32,11 +34,13 @@ class App(Server):
             theme_preset: TreezeTheme = TreezeTheme.TREEZE
         ):
         super().__init__()
+        self._app_dir = Path(inspect.stack(context=0)[1].filename).resolve().parent
         self._id = uuid.uuid4().hex
         self._node_tree: Node | None = None
         self._window_class: type[Window] | None = None
         self._theme_preset: TreezeTheme = None
         self._theme = Theme()
+        self._resources: dict[str] = {'resources': 'resources'}
         self._sessions: SessionManager = SessionManager(self)
 
         self.theme_preset = theme_preset
@@ -49,6 +53,11 @@ class App(Server):
     @property
     def id(self) -> str:
         return self._id
+
+    @property
+    def source_file(self) -> Path:
+        """The file where this App instance was created."""
+        return self._source_file
 
     @property
     def window(self) -> type[Window] | None:
@@ -89,6 +98,21 @@ class App(Server):
         Override granularly through `self.theme`
         """
         self._theme_preset = Validator.ensure(theme, TreezeTheme)
+
+    @property
+    def resources(self) -> list[str]:
+        return self._resources
+
+    @resources.setter
+    def resources(self, resources=dict[str, str]):
+        """
+        Sets the available resource dirs and their name.
+
+        The key represents the name of the resource. The name will explose http://my-app.com/{name}
+        The value represents a relative path to the main file running the App()
+        """
+        self._resources = Validator.ensure(resources, dict)
+
 
     # ==========================================================================
     #  Session methods

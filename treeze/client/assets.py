@@ -54,4 +54,4 @@ def _static_url(path: Path) -> str:
         STATIC_DIRECTORY,
     )
 
-    return f'/static/{relative_path.as_posix()}'
+    return f'/_treeze_static/{relative_path.as_posix()}'

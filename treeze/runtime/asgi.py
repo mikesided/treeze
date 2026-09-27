@@ -37,11 +37,23 @@ CLIENT_DIR = Path(__file__).parents[1] / 'client'
 def create_asgi_app(app: App) -> FastAPI:
     asgi_app = FastAPI()
 
+    # Mount internal treeze static files
     asgi_app.mount(
-        '/static',
+        '/_treeze_static',
         StaticFiles(directory=STATIC_DIRECTORY),
-        name='static',
+        name='_treeze_static',
     )
+
+    # Mount user-provided resources
+    for name, rel_path in app.resources.items():
+        abs_path = (app._app_dir / rel_path).resolve()
+
+        asgi_app.mount(
+            f'/{name}',
+            StaticFiles(directory=abs_path),
+            name=name,
+        )
+
 
     @asgi_app.get('/', response_class=HTMLResponse)
     async def index() -> HTMLResponse:
