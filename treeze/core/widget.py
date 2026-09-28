@@ -97,31 +97,31 @@ class Widget(ABC):
     enabled_changed = Signal(bool)  # (isEnabled?)  # TODO: implement actual enabled API
 
     def __init__(
-            self, 
+        self, 
 
-            variant: Variant = Variant.DEFAULT,
-            style: StrEnum | None = None,  # Default lives in cls._DEFAULT_STYLE
+        variant: Variant = Variant.DEFAULT,
+        style: StrEnum | None = None,  # Default lives in cls._DEFAULT_STYLE
 
-            margin: int | tuple[int, int, int, int] | None = None,
-            padding: int | tuple[int, int, int, int] | None = None,
+        margin: int | tuple[int, int, int, int] | None = None,
+        padding: int | tuple[int, int, int, int] | None = None,
 
-            size_policy: tuple[SizePolicy, SizePolicy] | None = None,
-            horizontal_size_policy: SizePolicy = SizePolicy.PREFERRED,
-            vertical_size_policy: SizePolicy = SizePolicy.PREFERRED,
+        size_policy: tuple[SizePolicy, SizePolicy] | None = None,
+        horizontal_size_policy: SizePolicy = SizePolicy.PREFERRED,
+        vertical_size_policy: SizePolicy = SizePolicy.PREFERRED,
 
-            minimum_size: Size | None = None,
-            minimum_width: int | None = None,
-            minimum_height: int | None = None,
-            maximum_size: Size | None = None,
-            maximum_width: int | None = None,
-            maximum_height: int | None = None,
-            fixed_size: Size | None = None,
-            fixed_width: int | None = None,
-            fixed_height: int | None = None,
-            
-            classes: list[str] | None = None,
-            parent: Container | None = None,
-        ):
+        minimum_size: Size | None = None,
+        minimum_width: int | None = None,
+        minimum_height: int | None = None,
+        maximum_size: Size | None = None,
+        maximum_width: int | None = None,
+        maximum_height: int | None = None,
+        fixed_size: Size | None = None,
+        fixed_width: int | None = None,
+        fixed_height: int | None = None,
+        
+        classes: list[str] | None = None,
+        parent: Container | None = None,
+    ):
                 
         # Internal properties
         self._id = create_widget_id()

@@ -1,0 +1,18 @@
+.tz-line {
+    color: var(--tz-color-border);
+    border-color: var(--tz-color-border);
+    border: 0px;
+    border-top-style: solid;
+}
+
+.tz-line-vertical {
+    width: 1px;
+    height: 100%;
+    border-left-width: 1px;
+}
+
+.tz-line-horizontal {
+    width: 100%;
+    height: 1px;
+    border-top-width: 1px;
+}

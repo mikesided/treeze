@@ -21,11 +21,11 @@ class Button(Widget):
 
     clicked = Signal()
     def __init__(
-            self, 
-            text: str,
-            *args, 
-            **kwargs
-        ):
+        self, 
+        text: str,
+        *args, 
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.text = text
 

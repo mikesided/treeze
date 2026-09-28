@@ -208,6 +208,14 @@ class EventData(StrEnum):
     TEXT = 'text'
     VALUE = 'value'
 
+class ImageStyle(StrEnum):
+    FIT = 'fit'
+    FIXED = 'fixed'
+
+class InsertPosition(StrEnum):
+    FIRST = 'first'
+    LAST = 'last'
+
 class LabelStyle(StrEnum):
     BODY = 'body'
     BODY_SMALL = 'body-small'
@@ -234,18 +242,16 @@ class LayoutStyle(StrEnum):
     ROUNDED = 'rounded'
     TRANSPARENT = 'transparent'
 
-class ImageStyle(StrEnum):
-    FIT = 'fit'
-    FIXED = 'fixed'
+class LineStyle(StrEnum):
+    DASHED = 'dashed'
+    DOTTED = 'dotted'
+    DOUBLE = 'double'
+    SOLID = 'solid'
 
-class InsertPosition(StrEnum):
-    FIRST = 'first'
-    LAST = 'last'
-
-class Orientation(Enum):
-    NONE = auto()
-    HORIZONTAL = auto()
-    VERTICAL = auto()
+class Orientation(StrEnum):
+    NONE = 'none'
+    HORIZONTAL = 'horizontal'
+    VERTICAL = 'vertical'
 
 class PatchOp(StrEnum):
     """Maps patches to client.js implementation"""

@@ -20,12 +20,12 @@ class Image(Widget):
     _CSS_CLASS = 'tz-image'
 
     def __init__(
-            self, 
-            source: str | None = None,
-            alt: str = 'Image not found',
-            *args, 
-            **kwargs
-        ):
+        self, 
+        source: str | None = None,
+        alt: str = 'Image not found',
+        *args, 
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.source = source
         self.alt = alt

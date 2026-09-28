@@ -25,6 +25,7 @@ from treeze.core.enums import (
     LabelStyle,
     LayoutAlignment,
     LayoutStyle,
+    LineStyle,
     SizePolicy,
     TreezeTheme,
     Variant,
@@ -37,6 +38,8 @@ from treeze.widgets import (
     HLayout,
     HSpacer,
     Label,
+    VLine,
+    HLine,
     Image,
     Spacer,
     VLayout,
@@ -100,6 +103,7 @@ class ShowcaseWindow(Window):
         self.layout_header.add_widget(self.lbl_title)
         self.layout_header.add_widget(Spacer(fixed_width=50))
         self.layout_header.add_widget(self.lbl_subtitle)
+        self.layout_header.add_widget(VLine())
         self.layout_header.add_widget(HSpacer())
         self.layout_header.add_widget(self.btn_profile)
 

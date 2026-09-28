@@ -22,11 +22,11 @@ class Label(Widget):
     _DEFAULT_STYLE = LabelStyle.BODY
 
     def __init__(
-            self,
-            text: str = '',
-            *args,
-            **kwargs,
-        ):
+        self,
+        text: str = '',
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
         self._text = Validator.ensure(text, str)

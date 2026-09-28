@@ -1,0 +1,15 @@
+.tz-line-solid {
+    border-style: solid;
+}
+
+.tz-line-dashed {
+    border-style: dashed;
+}
+
+.tz-line-dotted {
+    border-style: dotted;
+}
+
+.tz-line-double {
+    border-style: double;
+}

@@ -1,0 +1,31 @@
+.tz-line-primary {
+    color: var(--tz-color-primary);
+}
+
+.tz-line-secondary {
+    color: var(--tz-color-secondary);
+}
+
+.tz-line-tertiary {
+    color: var(--tz-color-tertiary);
+}
+
+.tz-line-success {
+    color: var(--tz-color-success);
+}
+
+.tz-line-warning {
+    color: var(--tz-color-warning);
+}
+
+.tz-line-danger {
+    color: var(--tz-color-danger);
+}
+
+.tz-line-info {
+    color: var(--tz-color-info);
+}
+
+.tz-line-muted {
+    color: var(--tz-color-text-muted);
+}
