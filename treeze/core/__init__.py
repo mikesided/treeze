@@ -15,7 +15,8 @@ from .enums import (
     InsertPosition,
     Orientation,
     SizePolicy,
-    TreezeTheme
+    TreezeTheme,
+    Variant
 )
 
 from .exceptions import (

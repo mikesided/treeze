@@ -642,9 +642,11 @@ class Widget(ABC):
             case Orientation.HORIZONTAL:
                 main_axis_size_policy = self.horizontal_size_policy
                 cross_axis_size_policy = self.vertical_size_policy
+                cross_axis_property = 'height'
             case Orientation.VERTICAL:
                 main_axis_size_policy = self.vertical_size_policy
                 cross_axis_size_policy = self.horizontal_size_policy
+                cross_axis_property = 'width'
             case None:
                 return {}
             case _:
@@ -656,7 +658,7 @@ class Widget(ABC):
         # Map cross axis to align-self
         match cross_axis_size_policy:
             case SizePolicy.EXPANDING:
-                styles['align-self'] = 'stretch'
+                styles[cross_axis_property] = '100%'
             case SizePolicy.FIXED | SizePolicy.MINIMUM | SizePolicy.PREFERRED:
                 pass
             case _:

@@ -13,7 +13,7 @@ from .containers.h_layout import HLayout
 from .primitives.button import Button, ButtonStyle
 from .primitives.label import Label, LabelStyle
 from .primitives.lines import Line, LineStyle, HLine, VLine
-from .primitives.image import Image, ImageStyle, LineStyle
+from .primitives.image import Image, ImageStyle
 from .primitives.spacer import Spacer, HSpacer, VSpacer
 from .primitives.window import Window
 # ______________________________________________________________________________________________________________________
