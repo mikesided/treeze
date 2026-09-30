@@ -768,29 +768,42 @@ class Widget(ABC):
         if self.visible is False:
             styles['visibility'] = 'hidden'
 
-        if self.color:
-            styles['color'] = self.color
+        if self.color is not None:
+            styles['color'] = str(self.color)
 
-        if self.background_color:
-            styles['background-color'] = self.background_color
+        if self.background_color is not None:
+            property_name = 'background' if isinstance(
+                self.background_color, (ConeGradient, LinearGradient, RadialGradient)
+            ) else 'background-color'
+            styles[property_name] = str(self.background_color)
 
         if self.border:
             styles['border'] = self.border
 
-        if self.border_width:
-            styles['border-width'] = self.border_width
+        if self.border_width is not None:
+            styles['border-width'] = (
+                f'{self.border_width}px' if isinstance(self.border_width, int)
+                else self.border_width
+            )
 
         if self.border_style:
             styles['border-style'] = self.border_style
 
-        if self.border_color:
-            styles['border-color'] = self.border_color
+        if self.border_color is not None:
+            if isinstance(self.border_color, (ConeGradient, LinearGradient, RadialGradient)):
+                styles['border-image-source'] = str(self.border_color)
+                styles['border-image-slice'] = '1'
+            else:
+                styles['border-color'] = str(self.border_color)
 
-        if self.border_radius:
-            styles['border-radius'] = self.border_radius
+        if self.border_radius is not None:
+            styles['border-radius'] = (
+                f'{self.border_radius}px' if isinstance(self.border_radius, int)
+                else self.border_radius
+            )
 
-        if self.opacity:
-            styles['opacity'] = self.opacity
+        if self.opacity is not None:
+            styles['opacity'] = str(self.opacity)
 
         return styles
     
