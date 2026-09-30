@@ -17,7 +17,8 @@ class Image(Widget):
 
     _STYLE_TYPE = ImageStyle
     _DEFAULT_STYLE = ImageStyle.FIT
-    _CSS_CLASS = 'tz-image'
+    _CSS_CLASS = 'tz-image'    
+    _SUPPORTED_VARIANTS = ()
 
     def __init__(
         self, 

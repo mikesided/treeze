@@ -11,11 +11,11 @@ from dataclasses import dataclass, field, fields
 from enum import StrEnum
 
 from ..exceptions import TreezeTypeError, TreezeValueError
-from .gradients import LinearGradient
+from .gradients import ConeGradient, LinearGradient, RadialGradient
 
 # ______________________________________________________________________________________________________________________
 
-CssColor: TypeAlias = str | StrEnum | LinearGradient | None
+CssColor: TypeAlias = str | StrEnum | ConeGradient | LinearGradient | RadialGradient | None
 CssLength: TypeAlias = str | int | float | None  # Converted to raw string or suffixed with 'px'
 CssNumber: TypeAlias = str | int | float | None  # Converted to raw string
 CssText: TypeAlias = str | None  # Converted to raw string

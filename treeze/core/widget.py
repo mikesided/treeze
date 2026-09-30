@@ -11,10 +11,11 @@ from typing import Any, ClassVar, TYPE_CHECKING
 from abc import ABC, abstractmethod
 from itertools import count
 
-from .enums import Orientation, SizePolicy, Variant
+from .enums import Color, Orientation, SizePolicy, Variant
 from .exceptions import TreezeValueError, TreezeRuntimeError, TreezeTypeError
 from .signals import BoundSignal, Signal
 from .types.size import Size
+from .types.gradients import ConeGradient, LinearGradient, RadialGradient
 from .validation import Validator
 
 from ..utils.ids import create_widget_id
@@ -26,6 +27,8 @@ if TYPE_CHECKING:
     from ..widgets.bases.container import Container
 
 # ______________________________________________________________________________________________________________________
+
+ColorValue = str | Color | ConeGradient | LinearGradient | RadialGradient
 
 _widget_id_counter = count(1)
 
@@ -99,16 +102,20 @@ class Widget(ABC):
     def __init__(
         self, 
 
+        # Behavior & Look
         variant: Variant = Variant.DEFAULT,
         style: StrEnum | None = None,  # Default lives in cls._DEFAULT_STYLE
 
+        # Spacing
         margin: int | tuple[int, int, int, int] | None = None,
         padding: int | tuple[int, int, int, int] | None = None,
 
+        # Size Policies
         size_policy: tuple[SizePolicy, SizePolicy] | None = None,
         horizontal_size_policy: SizePolicy = SizePolicy.PREFERRED,
         vertical_size_policy: SizePolicy = SizePolicy.PREFERRED,
 
+        # Sizes
         minimum_size: Size | None = None,
         minimum_width: int | None = None,
         minimum_height: int | None = None,
@@ -118,7 +125,22 @@ class Widget(ABC):
         fixed_size: Size | None = None,
         fixed_width: int | None = None,
         fixed_height: int | None = None,
-        
+
+        # CSS Wrappers
+        color: ColorValue | None = None,
+        background_color: ColorValue | None = None,
+        border: str | None = None,
+        border_width: int | str | None = None,
+        border_style: str | None = None,
+        border_color: ColorValue | None = None,
+        border_radius: int | str | None = None,
+        opacity: float | str | None = None,
+
+        # Runtime
+        visible: bool = True,
+        collapsed: bool = False,
+
+        # Read Only
         classes: list[str] | None = None,
         parent: Container | None = None,
     ):
@@ -152,6 +174,17 @@ class Widget(ABC):
         self._fixed_width: int | None = None
         self._fixed_height: int | None = None
 
+        self._color: ColorValue | None = None
+        self._background_color: ColorValue | None = None
+        self._border_width: int | str | None = None
+        self._border_style: str | None = None
+        self._border_color: ColorValue | None = None
+        self._border_radius: int | str | None = None
+        self._opacity: float | str | None = None
+
+        self._visible: bool = True
+        self._collapsed: bool = False
+
         # Assign framework properties
         self.variant = variant
         self.style = style
@@ -176,6 +209,18 @@ class Widget(ABC):
         self.fixed_height = fixed_height
         if fixed_size:
             self.fixed_size = fixed_size
+
+        self.color = color
+        self.background_color = background_color
+        self.border = border
+        self.border_width = border_width
+        self.border_style = border_style
+        self.border_color = border_color
+        self.border_radius = border_radius
+        self.opacity = opacity
+
+        self.visible = visible
+        self.collapsed = collapsed
         
         # Add classes
         for klass in classes or ():
@@ -399,6 +444,91 @@ class Widget(ABC):
 
         self.maximum_width = width
         self.maximum_height = height
+
+    @property
+    def visible(self) ->  bool:
+        return self._visible
+
+    @visible.setter
+    def visible(self, visible):
+        """Set the visibility of the widget. Still takes layout space."""
+        self._visible = Validator.ensure(visible, bool)
+
+    @property
+    def collapsed(self) -> bool:
+        return self._collapsed
+
+    @collapsed.setter
+    def collapsed(self, collapsed):
+        """Collapse the widget. Does not take layout space."""
+        self._collapsed = Validator.ensure(collapsed, bool)
+
+    @property
+    def color(self) -> ColorValue:
+        return self._color
+
+    @color.setter
+    def color(self, color: ColorValue):
+        self._color = Validator.ensure(color, ColorValue, None)
+
+    @property
+    def background_color(self) -> ColorValue:
+        return self._background_color
+
+    @background_color.setter
+    def background_color(self, background_color: ColorValue):
+        self._background_color = Validator.ensure(background_color, ColorValue, None)
+
+    @property
+    def border(self) -> str | None:
+        return self._border
+
+    @border.setter
+    def border(self, border: str | None):
+        if isinstance(border, str):
+            if not len(border.split(' ')) == 3:
+                raise TreezeValueError('Border must match this format: "<width> <style> <color>"')
+        self._border = Validator.ensure(border, str, None)
+
+    @property
+    def border_width(self) -> int | str | None:
+        return self._border_width
+
+    @border_width.setter
+    def border_width(self, border_width: int | str | None):
+        self._border_width = Validator.ensure(border_width, int, str, None)
+
+    @property
+    def border_style(self) -> str | None:
+        return self._border_style
+
+    @border_style.setter
+    def border_style(self, border_style: str | None):
+        self._border_style = Validator.ensure(border_style, str, None)
+
+    @property
+    def border_color(self) -> ColorValue | None:
+        return self._border_color
+
+    @border_color.setter
+    def border_color(self, border_color: ColorValue | None):
+        self._border_color = Validator.ensure(border_color, ColorValue, None)
+
+    @property
+    def border_radius(self) -> int | str | None:
+        return self._border_radius
+
+    @border_radius.setter
+    def border_radius(self, border_radius: int | str | None):
+        self._border_radius = Validator.ensure(border_radius, int, str, None)
+
+    @property
+    def opacity(self) -> float | str | None:
+        return self._opacity
+
+    @opacity.setter
+    def opacity(self, opacity: float | str | None):
+        self._opacity = Validator.ensure(opacity, float, str, None)
 
         
     # ==========================================================================
@@ -631,6 +761,36 @@ class Widget(ABC):
         if self.padding is not None:
             top, right, bottom, left = self.padding
             styles['padding'] = f'{top}px {right}px {bottom}px {left}px'
+
+        if self.collapsed is True:
+            styles['display'] = 'none'
+
+        if self.visible is False:
+            styles['visibility'] = 'hidden'
+
+        if self.color:
+            styles['color'] = self.color
+
+        if self.background_color:
+            styles['background-color'] = self.background_color
+
+        if self.border:
+            styles['border'] = self.border
+
+        if self.border_width:
+            styles['border-width'] = self.border_width
+
+        if self.border_style:
+            styles['border-style'] = self.border_style
+
+        if self.border_color:
+            styles['border-color'] = self.border_color
+
+        if self.border_radius:
+            styles['border-radius'] = self.border_radius
+
+        if self.opacity:
+            styles['opacity'] = self.opacity
 
         return styles
     

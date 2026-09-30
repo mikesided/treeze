@@ -47,3 +47,9 @@ class LinearGradient:
             stops = ', '.join(self.stops)
 
         return f'linear-gradient({self.angle}deg, {stops})'
+
+class RadialGradient:
+    pass
+
+class ConeGradient:
+    pass
