@@ -111,7 +111,7 @@ class Widget(ABC):
         padding: int | tuple[int, int, int, int] | None = None,
 
         # Size Policies
-        size_policy: tuple[SizePolicy, SizePolicy] | None = None,
+        size_policy: tuple[SizePolicy, SizePolicy] | None = None,  # Quick access attribute
         horizontal_size_policy: SizePolicy = SizePolicy.PREFERRED,
         hsp: SizePolicy | None = None,  # Short code
         vertical_size_policy: SizePolicy = SizePolicy.PREFERRED,
@@ -199,10 +199,10 @@ class Widget(ABC):
         self.margin = margin
         self.padding = padding
 
-        self.horizontal_size_policy = horizontal_size_policy
-        self.vertical_size_policy = vertical_size_policy
         if size_policy:
             self.size_policy = size_policy
+        self.horizontal_size_policy = horizontal_size_policy
+        self.vertical_size_policy = vertical_size_policy
 
         self.minimum_width = minimum_width
         self.minimum_height = minimum_height

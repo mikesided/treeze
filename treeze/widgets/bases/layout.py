@@ -21,6 +21,7 @@ class Layout(Container, ABC):
     def __init__(
             self, 
             spacing: int | tuple[int, int] | None = None,
+            alignment: tuple[LayoutAlignment, LayoutAlignment] | None = None,  # Quick access attribute
             horizontal_alignment: LayoutAlignment = LayoutAlignment.CENTER,
             ha: LayoutAlignment | None = None,  # Short code
             vertical_alignment: LayoutAlignment = LayoutAlignment.CENTER,
@@ -33,10 +34,12 @@ class Layout(Container, ABC):
             horizontal_alignment = ha
         if va and not vertical_alignment:
             vertical_alignment = va
-            
+
         super().__init__(*args, **kwargs)
 
         self.spacing = spacing
+        if alignment:
+            self.alignment = alignment
         self.horizontal_alignment = horizontal_alignment
         self.vertical_alignment = vertical_alignment
 
@@ -64,6 +67,16 @@ class Layout(Container, ABC):
     @vertical_alignment.setter
     def vertical_alignment(self, alignment: LayoutAlignment):
         self._vertical_alignment = Validator.ensure(alignment, LayoutAlignment)
+
+    @property
+    def alignment(self) -> tuple[LayoutAlignment, LayoutAlignment]:
+        return (self.horizontal_alignment, self.vertical_alignment)
+
+    @alignment.setter
+    def alignment(self, layout_alignments: tuple[LayoutAlignment, LayoutAlignment]):
+        """Convenience wrapper around horizontal & vertical layout alignments"""
+        self.horizontal_alignment = layout_alignments[0]
+        self.vertical_alignment = layout_alignments[1]
 
     def _styles(self) -> dict[str, str]:
         styles = super()._styles()
