@@ -48,10 +48,15 @@ class Validator:
     @staticmethod
     def validate_spacing(spacing: int) -> int:
         """Spacing cannot be negative"""
-        spacing = Validator.ensure(spacing, int)
+        spacing = Validator.ensure(spacing, int, tuple)
 
-        if spacing < 0:
+        if isinstance(spacing, int) and spacing < 0:
             raise TreezeValueError('Spacing cannot be negative.')
+        elif isinstance(spacing, tuple):
+            if len(spacing) != 2:
+                raise TreezeValueError('Spacing must be an int, or a tuple of two ints')
+            if spacing[0] < 0 or spacing[1] < 0:
+                raise TreezeValueError('Spacing cannot be negative.')
 
         return spacing
     

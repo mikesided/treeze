@@ -1,6 +1,5 @@
 .tz-line {
     color: var(--tz-color-border);
-    border-color: var(--tz-color-border);
     border: 0px;
     border-top-style: solid;
 }

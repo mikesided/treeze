@@ -127,7 +127,7 @@ class Widget(ABC):
         fixed_height: int | None = None,
 
         # CSS Wrappers
-        color: ColorValue | None = None,
+        color: str | Color | None = None,
         background_color: ColorValue | None = None,
         border: str | None = None,
         border_width: int | str | None = None,

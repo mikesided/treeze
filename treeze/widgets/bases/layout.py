@@ -20,7 +20,7 @@ class Layout(Container, ABC):
     _CSS_CLASS = 'tz-layout'
     def __init__(
             self, 
-            spacing: int | None = None,
+            spacing: int | tuple[int, int] | None = None,
             horizontal_alignment: LayoutAlignment = LayoutAlignment.CENTER,
             vertical_alignment: LayoutAlignment = LayoutAlignment.CENTER,
             *args,
@@ -33,11 +33,12 @@ class Layout(Container, ABC):
         self.vertical_alignment = vertical_alignment
 
     @property
-    def spacing(self) -> int:
+    def spacing(self) -> int | tuple[str, str]:
         return self._spacing
     
     @spacing.setter
-    def spacing(self, spacing: int | None):
+    def spacing(self, spacing: int | tuple[int, int] | None):
+        """Spacing can be an int or tuple(horizontal spacing, vertical spacing)"""
         self._spacing = None if spacing is None else Validator.validate_spacing(spacing=spacing)
     
     @property
@@ -59,8 +60,11 @@ class Layout(Container, ABC):
     def _styles(self) -> dict[str, str]:
         styles = super()._styles()
 
-        if self.spacing is not None:
+        if isinstance(self.spacing, int):
             styles['gap'] = f'{self.spacing}px'
+        elif isinstance(self.spacing, tuple):
+            # NOTE: row-gap maps to "vertical spacing", and column-gap maps to "horizontal spacing"
+            styles['gap'] = f'{self.spacing[1]}px {self.spacing[0]}px'
 
         return styles
     

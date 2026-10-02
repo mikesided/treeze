@@ -16,7 +16,12 @@ from ...core.widget import Widget
 
 
 class Line(Widget):
-    """Simple widget that displays a straight line separator"""
+    """Simple widget that displays a straight line separator
+    
+    NOTE: 
+    To alter the line color, both `color` and `border_color` can be used,
+    although `color` will not render a gradient, while `border_color` will.
+    """
 
     _CSS_CLASS = 'tz-line'
     _STYLE_TYPE = LineStyle
@@ -30,6 +35,8 @@ class Line(Widget):
     ):
         super().__init__(*args, **kwargs)
         self.orientation = orientation
+        self.margin = kwargs.get('margin', 0)
+        self.padding = kwargs.get('padding', 0)
 
     def _classes(self):
         classes = super()._classes()
