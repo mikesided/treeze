@@ -113,7 +113,9 @@ class Widget(ABC):
         # Size Policies
         size_policy: tuple[SizePolicy, SizePolicy] | None = None,
         horizontal_size_policy: SizePolicy = SizePolicy.PREFERRED,
+        hsp: SizePolicy | None = None,  # Short code
         vertical_size_policy: SizePolicy = SizePolicy.PREFERRED,
+        vsp: SizePolicy | None = None,  # Short code
 
         # Sizes
         minimum_size: Size | None = None,
@@ -144,7 +146,12 @@ class Widget(ABC):
         classes: list[str] | None = None,
         parent: Container | None = None,
     ):
-                
+        # Map short codes to their original values
+        if hsp and not horizontal_size_policy:
+            horizontal_size_policy = hsp
+        if vsp and not vertical_size_policy:
+            vertical_size_policy = vsp
+        
         # Internal properties
         self._id = create_widget_id()
         self._node: Node | None = None

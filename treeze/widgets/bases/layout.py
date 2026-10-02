@@ -22,10 +22,18 @@ class Layout(Container, ABC):
             self, 
             spacing: int | tuple[int, int] | None = None,
             horizontal_alignment: LayoutAlignment = LayoutAlignment.CENTER,
+            ha: LayoutAlignment | None = None,  # Short code
             vertical_alignment: LayoutAlignment = LayoutAlignment.CENTER,
+            va: LayoutAlignment | None = None,  # Short code
             *args,
             **kwargs
         ):
+        # Map short codes to their original values
+        if ha and not horizontal_alignment:
+            horizontal_alignment = ha
+        if va and not vertical_alignment:
+            vertical_alignment = va
+            
         super().__init__(*args, **kwargs)
 
         self.spacing = spacing
