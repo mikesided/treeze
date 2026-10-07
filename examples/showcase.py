@@ -35,6 +35,7 @@ from treeze.core.types.size import Size
 from treeze.core.types.gradients import LinearGradient
 from treeze.widgets import (
     Button,
+    Card,
     HLayout,
     HSpacer,
     Label,
@@ -52,7 +53,7 @@ from treeze.widgets import (
 class ShowcaseWindow(Window):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.layout = VLayout()
+        self.layout = VLayout(size_policy=(SizePolicy.EXPANDING, SizePolicy.EXPANDING))
 
         # Header Widgets
         self.lbl_title = Label(text='Treeze', style=LabelStyle.HEADING_1, variant=Variant.PRIMARY)
@@ -210,6 +211,12 @@ class HomeWidget(ContentWidget):
         self.horizontal_alignment = LayoutAlignment.CENTER
 
         self.add_widget(Label('Welcome to treeze\'s showcase page!', style=LabelStyle.HEADING_1))
+
+        card = Card(parent=self)
+
+        card.header.add_widget(Label('HELLO HEADER'))
+        card.body.add_widget(Label('HELLO BODY'))
+        card.footer.add_widget(Label('HELLO FOOTER'))
 
 
 class LayoutsWidget(ContentWidget):

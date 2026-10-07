@@ -85,6 +85,8 @@ class Theme:
     surface_raised: CssColor = color_field()
     surface_sunken: CssColor = color_field()
 
+    shadow: CssColor = color_field()
+
     # ==========================================================================
     # Text
     # ==========================================================================

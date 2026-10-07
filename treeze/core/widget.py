@@ -88,6 +88,7 @@ class Widget(ABC):
         Variant.DANGER,
         Variant.INFO,
         Variant.MUTED,
+        Variant.STRONG,
     )  # All variants are supported on all widgets by default. Override to support a subset
 
     # BEHAVIOR
@@ -111,10 +112,10 @@ class Widget(ABC):
         padding: int | tuple[int, int, int, int] | None = None,
 
         # Size Policies
-        size_policy: tuple[SizePolicy, SizePolicy] | None = None,  # Quick access attribute
-        horizontal_size_policy: SizePolicy = SizePolicy.PREFERRED,
+        size_policy: tuple[SizePolicy, SizePolicy] = (SizePolicy.PREFERRED, SizePolicy.PREFERRED),
+        horizontal_size_policy: SizePolicy | None = None,
         hsp: SizePolicy | None = None,  # Short code
-        vertical_size_policy: SizePolicy = SizePolicy.PREFERRED,
+        vertical_size_policy: SizePolicy | None = None,
         vsp: SizePolicy | None = None,  # Short code
 
         # Sizes
@@ -147,9 +148,9 @@ class Widget(ABC):
         parent: Container | None = None,
     ):
         # Map short codes to their original values
-        if hsp and not horizontal_size_policy:
+        if hsp and horizontal_size_policy is None:
             horizontal_size_policy = hsp
-        if vsp and not vertical_size_policy:
+        if vsp and vertical_size_policy is None:
             vertical_size_policy = vsp
         
         # Internal properties
@@ -161,7 +162,8 @@ class Widget(ABC):
         
         self._signals: dict[str, BoundSignal] = {}
         self._container_orientation: Orientation | None = None  # Maintained by `_set_parent`: holds the container's orientation
-        self._extra_classes : list[str] = []  # Holds user-defined classes
+        self._composite_classes: list[str] = []
+        self._extra_classes: list[str] = []  # Holds user-defined classes
         self._parent: Container | None = None
 
         # Private properties
@@ -199,10 +201,11 @@ class Widget(ABC):
         self.margin = margin
         self.padding = padding
 
-        if size_policy:
-            self.size_policy = size_policy
-        self.horizontal_size_policy = horizontal_size_policy
-        self.vertical_size_policy = vertical_size_policy
+        self.size_policy = size_policy
+        if horizontal_size_policy:
+            self.horizontal_size_policy = horizontal_size_policy
+        if vertical_size_policy:
+            self.vertical_size_policy = vertical_size_policy
 
         self.minimum_width = minimum_width
         self.minimum_height = minimum_height
@@ -731,6 +734,11 @@ class Widget(ABC):
             else:
                 prefix = main_css_class
             classes.append(f'{prefix}-{self._style}')
+
+        # Add composite classes
+        for css_class in self._composite_classes:
+            if css_class not in classes:
+                classes.append(css_class)
 
         # Add user-defined classes
         for css_class in self._extra_classes:

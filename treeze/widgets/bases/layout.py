@@ -21,27 +21,28 @@ class Layout(Container, ABC):
     def __init__(
             self, 
             spacing: int | tuple[int, int] | None = None,
-            alignment: tuple[LayoutAlignment, LayoutAlignment] | None = None,  # Quick access attribute
-            horizontal_alignment: LayoutAlignment = LayoutAlignment.CENTER,
+            alignment: tuple[LayoutAlignment, LayoutAlignment] = (LayoutAlignment.CENTER, LayoutAlignment.CENTER),
+            horizontal_alignment: LayoutAlignment | None = None,
             ha: LayoutAlignment | None = None,  # Short code
-            vertical_alignment: LayoutAlignment = LayoutAlignment.CENTER,
+            vertical_alignment: LayoutAlignment | None = None,
             va: LayoutAlignment | None = None,  # Short code
             *args,
             **kwargs
         ):
         # Map short codes to their original values
-        if ha and not horizontal_alignment:
+        if ha and horizontal_alignment is None:
             horizontal_alignment = ha
-        if va and not vertical_alignment:
+        if va and vertical_alignment is None:
             vertical_alignment = va
 
         super().__init__(*args, **kwargs)
 
         self.spacing = spacing
-        if alignment:
-            self.alignment = alignment
-        self.horizontal_alignment = horizontal_alignment
-        self.vertical_alignment = vertical_alignment
+        self.alignment = alignment
+        if horizontal_alignment:
+            self.horizontal_alignment = horizontal_alignment
+        if vertical_alignment:
+            self.vertical_alignment = vertical_alignment
 
     @property
     def spacing(self) -> int | tuple[str, str]:

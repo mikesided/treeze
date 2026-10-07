@@ -34,10 +34,12 @@
     --tz-color-background: #0c0c10;
 
     --tz-color-surface: #181820;
-    --tz-color-surface-hover: #22222d;
+    --tz-color-surface-hover: #131330;
     --tz-color-surface-active: #2c2c3a;
     --tz-color-surface-raised: #20202a;
     --tz-color-surface-sunken: #07070a;
+
+    --tz-color-shadow: #101014;
 
     --tz-color-text: #f4f4f5;
     --tz-color-text-muted: #a1a1aa;

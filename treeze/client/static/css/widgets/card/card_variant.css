@@ -29,7 +29,3 @@
 .tz-line-muted {
     color: var(--tz-color-text-muted);
 }
-
-.tz-line-strong {
-    color: var(--tz-color-border-strong);
-}

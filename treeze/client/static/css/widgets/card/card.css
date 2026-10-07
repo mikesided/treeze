@@ -1,0 +1,7 @@
+.tz-card {    
+    border-style: solid;
+    border-width: 1px;
+    border-color: var(--tz-color-border-strong);
+
+    border-radius: var(--tz-radius-md);
+}

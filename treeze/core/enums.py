@@ -19,6 +19,10 @@ class ButtonStyle(StrEnum):
 class BrowserEvent(StrEnum):
     CLICK = 'click'
 
+class CardStyle(StrEnum):
+    FLAT = 'flat'
+    ELEVATED = 'elevated'
+
 class Color(StrEnum):
     # ==========================================================================
     # Simple / Common
@@ -292,3 +296,4 @@ class Variant(StrEnum):
     DANGER = 'danger'
     INFO = 'info'
     MUTED = 'muted'
+    STRONG = 'strong'
