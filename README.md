@@ -1,6 +1,9 @@
-# Treeze
-
-A Python-first UI framework that renders natively to the browser.
+<p align="center">
+  <img src="resrc/art/treeze_socials.svg" alt="Treeze logo" width="600" height="300">
+</p>
+<p align="center">
+  A Python-first UI framework that renders natively to the browser.
+</p>
 
 ## Features
 
@@ -13,4 +16,4 @@ A Python-first UI framework that renders natively to the browser.
 
 ## Status
 
-🚧 Early development
+Early development
