@@ -214,6 +214,7 @@ class EventData(StrEnum):
 
 class ImageStyle(StrEnum):
     FIT = 'fit'
+    FILL = 'fill'
     FIXED = 'fixed'
 
 class InsertPosition(StrEnum):

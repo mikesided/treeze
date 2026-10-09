@@ -4,4 +4,6 @@
     border-color: var(--tz-color-border-strong);
 
     border-radius: var(--tz-radius-md);
+
+    overflow: hidden;
 }

@@ -1,4 +1,15 @@
 .tz-image-fit {
-    max-width: 100%;
-    max-height: auto;
+    flex: 1 1 0;
+    object-fit: contain;
+}
+
+.tz-image-fill {
+    flex: 1 1 0;
+    object-fit: cover;
+}
+
+.tz-image-fixed {
+    width: auto;
+    height: auto;
+    object-fit: none;
 }
