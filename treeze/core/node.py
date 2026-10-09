@@ -35,14 +35,15 @@ class Node():
     children: list[Node] = field(default_factory=list)
 
     
-    def add_child(self, child: Node) -> Node:
+    def add_child(self, child: Node, insert_index: int | None = None) -> Node:
         """
         Add a child node.
         """
-        self.children.append(child)
+        if isinstance(insert_index, int) and insert_index >= 0:
+            self.children.insert(insert_index, child)
+        else:
+            self.children.append(child)
         return child
-
-
 
     def serialize(self) -> dict:
         """

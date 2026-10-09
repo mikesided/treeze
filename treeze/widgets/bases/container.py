@@ -26,15 +26,15 @@ class Container(Widget, ABC):
     @property
     def children(self) -> tuple[Widget, ...]:
         return tuple(self._children)
-    
-    def add_widget(
+
+    def _add_widget(
             self, 
             widget: Widget, 
             position: InsertPosition = InsertPosition.LAST,
             index: int | None = None,
             ) -> None:
         """
-        Adds a child widget to the container
+        Adds a child widget to the layout
         If index is specified, the position's InsertPosition is ignored
         """
         # Validate if the widget already has a parent, if so remove it
@@ -58,9 +58,9 @@ class Container(Widget, ABC):
 
         self._mark_dirty()
 
-    def remove_widget(self, widget: Widget):
+    def _remove_widget(self, widget: Widget):
         """
-        Removes a child widget from the container
+        Removes a child widget from the layout
         """
         Validator.ensure(widget, Widget)
         
@@ -70,7 +70,7 @@ class Container(Widget, ABC):
         self._children.remove(widget)
         widget._set_parent(None)
         self._mark_dirty()
-
+    
     def _walk_widgets(self):
         yield self
 

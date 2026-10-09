@@ -23,21 +23,21 @@ class Label(Widget):
 
     def __init__(
         self,
-        text: str = '',
+        text: str | None = None,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
 
-        self._text = Validator.ensure(text, str)
+        self._text = Validator.ensure(text, str, None)
 
     @property
-    def text(self) -> str:
+    def text(self) -> str | None:
         return self._text
 
     @text.setter
-    def text(self, text: str) -> None:
-        self._text = Validator.ensure(text, str)
+    def text(self, text: str | None) -> None:
+        self._text = Validator.ensure(text, str, None)
 
     def _render(self) -> Node:
         return Node(

@@ -21,6 +21,11 @@
     --tz-radius-lg: 12px;
     --tz-radius-full: 9999px;
 
+     /*
+     Sizing
+     */
+    --tz-icon-size: 16px;
+
 }
 
 /*

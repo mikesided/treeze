@@ -48,3 +48,10 @@
 
     cursor: default;
 }
+
+.tz-button .tz-image {
+    flex: 0 0 auto;
+    aspect-ratio: 1 / 1;
+    width: var(--tz-icon-size);
+    height: var(--tz-icon-size);
+}

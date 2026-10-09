@@ -274,6 +274,7 @@ class PatchOp(StrEnum):
 
     ADD_CLASS = 'add_class'
     REMOVE_CLASS = 'remove_class'
+
     
 class SizePolicy(StrEnum):
     EXPANDING = '1 1 auto'

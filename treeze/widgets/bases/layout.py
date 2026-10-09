@@ -9,9 +9,11 @@ from abc import ABC, abstractmethod
 
 from .container import Container
 
-from ...core.enums import LayoutAlignment, LayoutStyle
+from ...core.enums import LayoutAlignment, LayoutStyle, InsertPosition
+from ...core.exceptions import TreezeValueError
 from ...core.node import Node
 from ...core.validation import Validator
+from ...core.widget import Widget
 
 # ______________________________________________________________________________________________________________________
 
@@ -36,6 +38,9 @@ class Layout(Container, ABC):
             vertical_alignment = va
 
         super().__init__(*args, **kwargs)
+
+        self.add_widget = self._add_widget
+        self.remove_widget = self._remove_widget
 
         self.spacing = spacing
         self.alignment = alignment

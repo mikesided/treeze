@@ -16,7 +16,7 @@ from ...core.widget import Widget
 class Image(Widget):
 
     _STYLE_TYPE = ImageStyle
-    _DEFAULT_STYLE = ImageStyle.FIT
+    _DEFAULT_STYLE = ImageStyle.FIXED
     _CSS_CLASS = 'tz-image'    
     _SUPPORTED_VARIANTS = ()
 

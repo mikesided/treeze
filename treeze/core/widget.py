@@ -244,7 +244,7 @@ class Widget(ABC):
         parent = Validator.ensure(parent, Widget, None)
         if parent is not None and parent._CHILDHOST is True:
             # Ugly - no direct link to a container, but will do as long as only containers can be child hosts
-            parent.add_widget(self)
+            parent._add_widget(self)
 
     # ==========================================================================
     #  Properties
