@@ -26,12 +26,12 @@
         box-shadow 120ms ease;
 }
 
-.tz-button:hover {
+.tz-button:enabled:hover {
     background: var(--tz-color-surface-hover);
     border-color: var(--tz-color-border-hover);
 }
 
-.tz-button:active {
+.tz-button:enabled:active {
     background: var(--tz-color-surface-active);
     border-color: var(--tz-color-border-strong);
 }

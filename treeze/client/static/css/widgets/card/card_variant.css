@@ -1,31 +1,43 @@
-.tz-line-primary {
+.tz-card .tz-line {
+    color: inherit;
+}
+
+.tz-card-primary {
     color: var(--tz-color-primary);
+    border-color: currentColor;
 }
 
-.tz-line-secondary {
+.tz-card-secondary {
     color: var(--tz-color-secondary);
+    border-color: currentColor;
 }
 
-.tz-line-tertiary {
+.tz-card-tertiary {
     color: var(--tz-color-tertiary);
+    border-color: currentColor;
 }
 
-.tz-line-success {
+.tz-card-success {
     color: var(--tz-color-success);
+    border-color: currentColor;
 }
 
-.tz-line-warning {
+.tz-card-warning {
     color: var(--tz-color-warning);
+    border-color: currentColor;
 }
 
-.tz-line-danger {
+.tz-card-danger {
     color: var(--tz-color-danger);
+    border-color: currentColor;
 }
 
-.tz-line-info {
+.tz-card-info {
     color: var(--tz-color-info);
+    border-color: currentColor;
 }
 
-.tz-line-muted {
+.tz-card-muted {
     color: var(--tz-color-text-muted);
+    border-color: currentColor;
 }

@@ -18,3 +18,7 @@
     overflow-wrap: break-word;
     white-space: pre-wrap;
 }
+
+.tz-label .tz-disabled {
+    color: var(--tz-color-disabled);
+}

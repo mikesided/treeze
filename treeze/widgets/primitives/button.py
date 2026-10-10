@@ -5,7 +5,7 @@ Description:  Base class for a Button widget
 """
 # ______________________________________________________________________________________________________________________
 # Imports
-from ...core.enums import BrowserEvent, ButtonStyle, InsertPosition
+from ...core.enums import BrowserEvent, ButtonStyle, InsertPosition, Variant
 from ...core.events import EventBinding
 from ...core.node import Node
 from ...core.types.size import Size
@@ -20,10 +20,27 @@ from .image import Image
 # ______________________________________________________________________________________________________________________
 
 class Button(Container):
+    """
+    Clickable button.
+    Contains a Label and an optional Image (icon).
+
+    NOTE: Label color is inherited from the button, unless specified as an attribute
+    """
 
     _STYLE_TYPE = ButtonStyle
     _DEFAULT_STYLE = ButtonStyle.FILLED
     _CSS_CLASS = 'tz-button'
+    _ALLOW_DISABLED = True
+    _SUPPORTED_VARIANTS = (
+        Variant.PRIMARY,
+        Variant.SECONDARY,
+        Variant.TERTIARY,
+        Variant.SUCCESS,
+        Variant.WARNING,
+        Variant.DANGER,
+        Variant.INFO,
+        Variant.MUTED,
+    )
 
     clicked = Signal()
     def __init__(
@@ -91,6 +108,9 @@ class Button(Container):
                 BrowserEvent.CLICK: EventBinding(signal='clicked'),
             },
         )
+
+        if self.enabled is False:
+            node.attributes['disabled'] = True
 
         # Conditional node build
         if self.text:

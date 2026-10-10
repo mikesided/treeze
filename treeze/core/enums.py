@@ -282,6 +282,12 @@ class SizePolicy(StrEnum):
     MINIMUM = '0 1 auto'
     PREFERRED = '0 1 auto'
 
+class TextAlignment(StrEnum):
+    LEFT = 'left'
+    CENTER = 'center'
+    RIGHT = 'right'
+    JUSTIFY = 'justify'
+
 class TreezeTheme(StrEnum):
     CUSTOM = 'custom'
     DARK = 'dark'

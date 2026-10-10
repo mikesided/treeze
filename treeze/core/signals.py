@@ -95,7 +95,7 @@ class BoundSignal:
         self._owner = owner
         self._name = name
         self._arg_types = arg_types
-        self._callbacks: list[Callable[..., Any]] = []
+        self._callbacks: list[tuple[Callable[..., Any], bool]] = []
 
     @property
     def owner(self) -> SignalOwner:
@@ -110,30 +110,64 @@ class BoundSignal:
         return self._arg_types
     
     def connect(self, callback: Callable[..., Any]) -> None:
-        """Connect a callable to be called back when this signal emits"""
+        """Connect a public callback to be called when this signal emits."""
+        self._connect(callback, internal=False)
+        
+    def disconnect(self, callback: Callable[..., Any] | None = None) -> None:
+        """Disconnect a public callback, or all public callbacks if None."""
+        self._disconnect(callback, internal=False)
+
+    def _internal_connect(self, callback: Callable[..., Any]) -> None:
+        """Connect a callback protected from disconnect()."""
+        self._connect(callback, internal=True)
+
+    def _connect(
+        self,
+        callback: Callable[..., Any],
+        *,
+        internal: bool,
+    ) -> None:
+        """Validate and store a public or internal connection."""
         if not callable(callback):
             raise TreezeRuntimeError(f'Signal callback for {self._name!r} must be callable.')
 
         self._validate_callback_accepts_declared_args(callback)
 
-        self._callbacks.append(callback)
+        self._callbacks.append((callback, internal))
 
-    def disconnect(self, callback: Callable[..., Any] | None = None) -> None:
-        """Disconnects a callback (or all callbacks if None) from this signal."""
+
+    def _internal_disconnect(self, callback: Callable[..., Any] | None = None) -> None:
+        """Disconnect an internal callback, or all internal callbacks if None."""
+        self._disconnect(callback, internal=True)
+
+    def _disconnect(
+        self,
+        callback: Callable[..., Any] | None,
+        *,
+        internal: bool,
+    ) -> None:
+        """Remove connections only from the requested public or internal group."""
         if callback is None:
-            self._callbacks.clear()
+            self._callbacks[:] = [
+                connection for connection in self._callbacks if connection[1] != internal
+            ]
             return
-        
-        try:
-            self._callbacks.remove(callback)
-        except ValueError:
-            raise TreezeRuntimeError(f'Callback is not connected to signal {self._name!r}.') from None
+
+        for index, (connected, is_internal) in enumerate(self._callbacks):
+            if is_internal == internal and connected == callback:
+                del self._callbacks[index]
+                return
+
+        connection_type = 'internally' if internal else 'publicly'
+        raise TreezeRuntimeError(
+            f'Callback is not {connection_type} connected to signal {self._name!r}.'
+        )
 
     def emit(self, *args: Any, **kwargs: Any) -> None:
         """Trigger all callbacks for this signal"""
         self._validate_emit_arguments(args, kwargs)
 
-        for callback in tuple(self._callbacks):
+        for callback, _ in tuple(self._callbacks):
             self._validate_callback_signature(callback, args, kwargs)
 
             callback(*args, **kwargs)

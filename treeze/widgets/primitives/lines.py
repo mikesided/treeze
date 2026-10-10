@@ -6,7 +6,7 @@ Description:  Simple text label widget
 # Imports
 from enum import StrEnum
 
-from ...core.enums import LineStyle, Orientation
+from ...core.enums import LineStyle, Orientation, Variant
 from ...core.node import Node
 from ...core.signals import Signal
 from ...core.validation import Validator
@@ -24,6 +24,17 @@ class Line(Widget):
     """
 
     _CSS_CLASS = 'tz-line'
+    _SUPPORTED_VARIANTS = (
+        Variant.PRIMARY,
+        Variant.SECONDARY,
+        Variant.TERTIARY,
+        Variant.SUCCESS,
+        Variant.WARNING,
+        Variant.DANGER,
+        Variant.INFO,
+        Variant.MUTED,
+        Variant.STRONG,
+    )
     _STYLE_TYPE = LineStyle
     _DEFAULT_STYLE = LineStyle.SOLID
 
@@ -72,4 +83,3 @@ class VLine(Line):
         **kwargs
     ):
         super().__init__(orientation=Orientation.VERTICAL, *args, **kwargs)
-

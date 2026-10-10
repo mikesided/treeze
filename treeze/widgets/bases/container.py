@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from ...core.enums import InsertPosition
 from ...core.exceptions import TreezeValueError
 from ...core.node import Node
+from ...core.signals import Signal
 from ...core.validation import Validator
 from ...core.widget import Widget
 
@@ -18,6 +19,9 @@ from ...core.widget import Widget
 class Container(Widget, ABC):
 
     _CHILDHOST = True
+
+    children_changed = Signal(tuple)  # tuple[Widget, ...] of child widgets
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -26,6 +30,16 @@ class Container(Widget, ABC):
     @property
     def children(self) -> tuple[Widget, ...]:
         return tuple(self._children)
+
+    def clear(self) -> None:
+        """
+        Unparents all widgets. 
+        NOTE: Widgets will not be deleted, only unparented
+        """
+        for widget in reversed(self._children):
+            widget.unparent()
+            
+        self._mark_dirty()
 
     def _add_widget(
             self, 
@@ -56,6 +70,7 @@ class Container(Widget, ABC):
         if self._session is not None:
             widget._set_session(self._session)
 
+        self.children_changed.emit(tuple(self.children))
         self._mark_dirty()
 
     def _remove_widget(self, widget: Widget):
@@ -69,6 +84,8 @@ class Container(Widget, ABC):
 
         self._children.remove(widget)
         widget._set_parent(None)
+        
+        self.children_changed.emit(tuple(self.children))
         self._mark_dirty()
     
     def _walk_widgets(self):

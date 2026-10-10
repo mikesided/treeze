@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 
 from .container import Container
 
-from ...core.enums import LayoutAlignment, LayoutStyle, InsertPosition
+from ...core.enums import LayoutAlignment, LayoutStyle, InsertPosition, Variant
 from ...core.exceptions import TreezeValueError
 from ...core.node import Node
 from ...core.validation import Validator
@@ -20,6 +20,16 @@ from ...core.widget import Widget
 class Layout(Container, ABC):
 
     _CSS_CLASS = 'tz-layout'
+    _SUPPORTED_VARIANTS = (
+        Variant.PRIMARY,
+        Variant.SECONDARY,
+        Variant.TERTIARY,
+        Variant.SUCCESS,
+        Variant.WARNING,
+        Variant.DANGER,
+        Variant.INFO,
+        Variant.MUTED,
+    )
     def __init__(
             self, 
             spacing: int | tuple[int, int] | None = None,

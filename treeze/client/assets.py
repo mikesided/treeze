@@ -28,7 +28,11 @@ def discover_stylesheets() -> tuple[str, ...]:
                 CSS_DIRECTORY / 'widgets'
             ).rglob('*.css'),
         ),
-        key=lambda path: path.as_posix(),
+        key=lambda path: (
+            path.parent.as_posix(),
+            2 if path.stem.endswith('_style') else 1 if path.stem.endswith('_variant') else 0,
+            path.name,
+        ),
     )
 
     stylesheets = (

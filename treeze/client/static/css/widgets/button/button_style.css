@@ -8,11 +8,11 @@
     box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
 }
 
-.tz-button-filled:hover {
+.tz-button-filled:enabled:hover {
     box-shadow: 0 2px 4px rgb(0 0 0 / 0.12);
 }
 
-.tz-button-filled:active {
+.tz-button-filled:enabled:active {
     box-shadow: none;
     transform: translateY(1px);
 }
@@ -28,11 +28,11 @@
     background: transparent;
 }
 
-.tz-button-outlined:hover {
+.tz-button-outlined:enabled:hover {
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
 }
 
-.tz-button-outlined:active {
+.tz-button-outlined:enabled:active {
     box-shadow: none;
     transform: translateY(1px);
 }
@@ -49,11 +49,11 @@
     opacity: 0.85;
 }
 
-.tz-button-soft:hover {
+.tz-button-soft:enabled:hover {
     opacity: 1;
 }
 
-.tz-button-soft:active {
+.tz-button-soft:enabled:active {
     transform: translateY(1px);
 }
 
@@ -69,7 +69,23 @@
     border-color: transparent;
 }
 
-.tz-button-ghost:active {
+.tz-button-ghost:enabled {
+    color: var(--tz-button-variant-color, var(--tz-color-text));
+}
+
+.tz-button-ghost:disabled {
+    color: var(--tz-color-on-disabled);
+    background: transparent;
+    border-color: transparent;
+}
+
+.tz-button-ghost:enabled:hover,
+.tz-button-ghost:enabled:active {
+    background: transparent;
+    border-color: transparent;
+}
+
+.tz-button-ghost:enabled:active {
     transform: translateY(1px);
 }
 
@@ -92,11 +108,11 @@
     box-shadow: none;
 }
 
-.tz-button-link:hover {
+.tz-button-link:enabled:hover {
     text-decoration: underline;
     text-underline-offset: 2px;
 }
 
-.tz-button-link:active {
+.tz-button-link:enabled:active {
     transform: translateY(1px);
 }

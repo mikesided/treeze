@@ -24,6 +24,18 @@ class Card(VLayout):
     _STYLE_TYPE = CardStyle
     _DEFAULT_STYLE = CardStyle.FLAT
     _CSS_CLASS = 'tz-card'
+    _SUPPORTED_VARIANTS = (
+        Variant.PRIMARY,
+        Variant.SECONDARY,
+        Variant.TERTIARY,
+        Variant.SUCCESS,
+        Variant.WARNING,
+        Variant.DANGER,
+        Variant.INFO,
+        Variant.MUTED,
+    )
+    _STYLE_PREFIX = 'tz-card'
+    _VARIANT_PREFIX = 'tz-card'
 
     clicked = Signal()
     def __init__(
@@ -59,6 +71,13 @@ class Card(VLayout):
         self.add_widget(self.separators[1])
         self.add_widget(self.footer)
 
+        # Connections
+        self.header.children_changed._internal_connect(self._update_separators)
+        self.footer.children_changed._internal_connect(self._update_separators)
+
+        # Init
+        self._update_separators()
+
     @property
     def separators(self) -> tuple[HLine, HLine]:
         return (self._upper_separator, self._lower_separator)
@@ -85,3 +104,7 @@ class Card(VLayout):
     def footer(self) -> Container:
         """Holds the Container located at the bottm of the card"""
         return self._footer
+
+    def _update_separators(self, *args):
+        self.upper_separator.collapsed = not any(self.header.children)
+        self.lower_separator.collapsed = not any(self.footer.children)

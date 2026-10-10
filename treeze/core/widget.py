@@ -79,17 +79,10 @@ class Widget(ABC):
     _DEFAULT_STYLE: ClassVar[StrEnum | None] = None  # If a style type is set, we must declare a default
     _STYLE_PREFIX: ClassVar[str | None] = None  # Defaults to using the _CSS_CLASS as prefix
     _VARIANT_PREFIX: ClassVar[str | None] = None  # Defaults to using the _CSS_CLASS as prefix
-    _SUPPORTED_VARIANTS: ClassVar[tuple[Variant, ...]] = (
-        Variant.PRIMARY,
-        Variant.SECONDARY,
-        Variant.TERTIARY,
-        Variant.SUCCESS,
-        Variant.WARNING,
-        Variant.DANGER,
-        Variant.INFO,
-        Variant.MUTED,
-        Variant.STRONG,
-    )  # All variants are supported on all widgets by default. Override to support a subset
+    _SUPPORTED_VARIANTS: ClassVar[tuple[Variant, ...]] = ()  # Widgets opt in to CSS-backed variants
+
+    # RUNTIME
+    _ALLOW_DISABLED: bool = False
 
     # BEHAVIOR
     _CHILDHOST: bool = False  # Can this widget host children?
@@ -97,8 +90,9 @@ class Widget(ABC):
 
     # SIGNALS
     parent_changed = Signal(object, object)  # (Old parent container widget, New parent container widget)
-    visibility_changed = Signal(bool)  # (isVisible?)  # TODO: implement actual vis API
-    enabled_changed = Signal(bool)  # (isEnabled?)  # TODO: implement actual enabled API
+    visibility_changed = Signal(bool)  # (isVisible?)
+    collapsed_changed = Signal(bool)  # (isCollapsed?)
+    enabled_changed = Signal(bool)  # (isEnabled?)
 
     def __init__(
         self, 
@@ -142,6 +136,7 @@ class Widget(ABC):
         # Runtime
         visible: bool = True,
         collapsed: bool = False,
+        enabled: bool = True,
 
         # Read Only
         classes: list[str] | None = None,
@@ -193,6 +188,11 @@ class Widget(ABC):
 
         self._visible: bool = True
         self._collapsed: bool = False
+        self._enabled: bool = True
+
+        # Create signals
+        for signal_name, signal in type(self)._declared_signals().items():
+            self._create_signal(signal_name, signal.arg_types)
 
         # Assign framework properties
         self.variant = variant
@@ -231,14 +231,11 @@ class Widget(ABC):
 
         self.visible = visible
         self.collapsed = collapsed
+        self.enabled = enabled
         
         # Add classes
         for klass in classes or ():
             self.add_class(klass)
-
-        # Add Signals
-        for signal_name, signal in type(self)._declared_signals().items():
-            self._create_signal(signal_name, signal.arg_types)
 
         # Set parent
         parent = Validator.ensure(parent, Widget, None)
@@ -462,7 +459,11 @@ class Widget(ABC):
     @visible.setter
     def visible(self, visible):
         """Set the visibility of the widget. Still takes layout space."""
+        old_state = self.visible
         self._visible = Validator.ensure(visible, bool)
+
+        if old_state != self.visible:
+            self.visibility_changed.emit(self.visible)
 
     @property
     def collapsed(self) -> bool:
@@ -471,7 +472,27 @@ class Widget(ABC):
     @collapsed.setter
     def collapsed(self, collapsed):
         """Collapse the widget. Does not take layout space."""
+        old_state = self.collapsed
         self._collapsed = Validator.ensure(collapsed, bool)
+
+        if old_state != self.collapsed:
+            self.collapsed_changed.emit(self.collapsed)
+
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
+
+    @enabled.setter
+    def enabled(self, enabled: bool):
+        """Enables/Disables the widget."""
+        if enabled is False and self._ALLOW_DISABLED is False:
+            raise TreezeRuntimeError(f'{self.__class__.__name__} widgets cannot be disabled')
+
+        old_state = self.enabled
+        self._enabled = enabled
+
+        if old_state != self.enabled:
+            self.enabled_changed.emit(self.enabled)
 
     @property
     def color(self) -> ColorValue:
@@ -544,6 +565,18 @@ class Widget(ABC):
     # ==========================================================================
     #  Public API
     # ==========================================================================
+
+    def unparent(self) -> None:
+        """Remove this widget from its parent"""
+        if not self.parent:
+            return
+
+        self.parent._remove_widget(widget=self)
+        
+        # Not sure if mark dirty is required here. 
+        # If the widget no longer has a parent, it shouldn't be rendered anyways
+        self._mark_dirty()
+
 
     def add_class(self, class_name: str) -> None:
         """Adds a css class to the widget"""
@@ -718,6 +751,10 @@ class Widget(ABC):
             for css_class in css_classes:
                 if css_class not in classes:
                     classes.append(css_class)
+
+        # Add disabled class
+        if self.enabled is False:
+            classes.append('tz-disabled')
 
         # Add variant class
         if self.variant != Variant.DEFAULT:
