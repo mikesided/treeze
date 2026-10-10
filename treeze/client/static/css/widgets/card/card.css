@@ -1,11 +1,18 @@
 .tz-card {    
+    --tz-card-border-color: var(--tz-color-border-strong);
+
     border-style: solid;
     border-width: 1px;
-    border-color: var(--tz-color-border-strong);
+    border-color: var(--tz-card-border-color);
 
     border-radius: var(--tz-radius-md);
 
     overflow: hidden;
+}
+
+.tz-card > .card-separator {
+    color: var(--tz-card-border-color);
+    border-color: var(--tz-card-border-color);
 }
 
 .tz-card .tz-card-header {

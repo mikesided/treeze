@@ -39,6 +39,8 @@ class Window(Widget):
 
     _SUPPORTED_VARIANTS = ()
     _CSS_CLASS = 'tz-window'
+    _STYLE_PREFIX = None
+    _VARIANT_PREFIX = None
     def __init__(
             self,
             layout: Layout | None = None,
@@ -95,6 +97,7 @@ class Window(Widget):
 
     def _render(self) -> Node:
         node = Node(
+            id=self.id,
             id=self.id,
             tag='div',
             classes=self._classes(),

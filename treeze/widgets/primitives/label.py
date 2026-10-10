@@ -18,6 +18,8 @@ from ...core.widget import Widget
 class Label(Widget):
 
     _CSS_CLASS = 'tz-label'
+    _STYLE_PREFIX = None
+    _VARIANT_PREFIX = None
     _ALLOW_DISABLED = True
     _STYLE_TYPE = LabelStyle
     _DEFAULT_STYLE = LabelStyle.BODY

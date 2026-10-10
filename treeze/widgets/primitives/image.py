@@ -18,6 +18,8 @@ class Image(Widget):
     _STYLE_TYPE = ImageStyle
     _DEFAULT_STYLE = ImageStyle.FIXED
     _CSS_CLASS = 'tz-image'    
+    _STYLE_PREFIX = None
+    _VARIANT_PREFIX = None
     _SUPPORTED_VARIANTS = ()
 
     def __init__(

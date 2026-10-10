@@ -4,6 +4,8 @@
 
 .tz-button-primary {
     --tz-button-variant-color: var(--tz-color-primary);
+    --tz-button-variant-hover: var(--tz-color-primary-hover);
+    --tz-button-variant-active: var(--tz-color-primary-active);
     color: var(--tz-color-on-primary);
     background: var(--tz-color-primary);
     border-color: var(--tz-color-primary);
@@ -21,6 +23,8 @@
 
 .tz-button-secondary {
     --tz-button-variant-color: var(--tz-color-secondary);
+    --tz-button-variant-hover: var(--tz-color-secondary-hover);
+    --tz-button-variant-active: var(--tz-color-secondary-active);
     color: var(--tz-color-on-secondary);
     background: var(--tz-color-secondary);
     border-color: var(--tz-color-secondary);
@@ -38,6 +42,8 @@
 
 .tz-button-tertiary {
     --tz-button-variant-color: var(--tz-color-tertiary);
+    --tz-button-variant-hover: var(--tz-color-tertiary-hover);
+    --tz-button-variant-active: var(--tz-color-tertiary-active);
     color: var(--tz-color-on-tertiary);
     background: var(--tz-color-tertiary);
     border-color: var(--tz-color-tertiary);
@@ -55,6 +61,8 @@
 
 .tz-button-success {
     --tz-button-variant-color: var(--tz-color-success);
+    --tz-button-variant-hover: var(--tz-color-success-hover);
+    --tz-button-variant-active: var(--tz-color-success-active);
     color: var(--tz-color-on-success);
     background: var(--tz-color-success);
     border-color: var(--tz-color-success);
@@ -72,6 +80,8 @@
 
 .tz-button-warning {
     --tz-button-variant-color: var(--tz-color-warning);
+    --tz-button-variant-hover: var(--tz-color-warning-hover);
+    --tz-button-variant-active: var(--tz-color-warning-active);
     color: var(--tz-color-on-warning);
     background: var(--tz-color-warning);
     border-color: var(--tz-color-warning);
@@ -89,6 +99,8 @@
 
 .tz-button-danger {
     --tz-button-variant-color: var(--tz-color-danger);
+    --tz-button-variant-hover: var(--tz-color-danger-hover);
+    --tz-button-variant-active: var(--tz-color-danger-active);
     color: var(--tz-color-on-danger);
     background: var(--tz-color-danger);
     border-color: var(--tz-color-danger);
@@ -106,6 +118,8 @@
 
 .tz-button-info {
     --tz-button-variant-color: var(--tz-color-info);
+    --tz-button-variant-hover: var(--tz-color-info-hover);
+    --tz-button-variant-active: var(--tz-color-info-active);
     color: var(--tz-color-on-info);
     background: var(--tz-color-info);
     border-color: var(--tz-color-info);
@@ -123,6 +137,8 @@
 
 .tz-button-muted {
     --tz-button-variant-color: var(--tz-color-text-muted);
+    --tz-button-variant-hover: var(--tz-color-text);
+    --tz-button-variant-active: var(--tz-color-text);
     color: var(--tz-color-text-muted);
     background: transparent;
     border-color: var(--tz-color-border);

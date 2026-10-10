@@ -15,6 +15,8 @@ class Spacer(Widget):
 
     _SUPPORTED_VARIANTS = ()
     _CSS_CLASS = 'tz-spacer'
+    _STYLE_PREFIX = None
+    _VARIANT_PREFIX = None
     def _render(self) -> Node:
         return Node(
             id=self.id,

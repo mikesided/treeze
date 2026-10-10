@@ -30,6 +30,8 @@ class Button(Container):
     _STYLE_TYPE = ButtonStyle
     _DEFAULT_STYLE = ButtonStyle.FILLED
     _CSS_CLASS = 'tz-button'
+    _STYLE_PREFIX = None
+    _VARIANT_PREFIX = None
     _ALLOW_DISABLED = True
     _SUPPORTED_VARIANTS = (
         Variant.PRIMARY,

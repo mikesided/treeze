@@ -79,13 +79,16 @@
     border-color: transparent;
 }
 
-.tz-button-ghost:enabled:hover,
-.tz-button-ghost:enabled:active {
+.tz-button-ghost:enabled:hover {
+    color: var(--tz-button-variant-hover, var(--tz-color-text));
     background: transparent;
     border-color: transparent;
 }
 
 .tz-button-ghost:enabled:active {
+    color: var(--tz-button-variant-active, var(--tz-color-text));
+    background: transparent;
+    border-color: transparent;
     transform: translateY(1px);
 }
 

@@ -24,6 +24,8 @@ class Card(VLayout):
     _STYLE_TYPE = CardStyle
     _DEFAULT_STYLE = CardStyle.FLAT
     _CSS_CLASS = 'tz-card'
+    _STYLE_PREFIX = None
+    _VARIANT_PREFIX = None
     _SUPPORTED_VARIANTS = (
         Variant.PRIMARY,
         Variant.SECONDARY,
@@ -34,8 +36,6 @@ class Card(VLayout):
         Variant.INFO,
         Variant.MUTED,
     )
-    _STYLE_PREFIX = 'tz-card'
-    _VARIANT_PREFIX = 'tz-card'
 
     clicked = Signal()
     def __init__(

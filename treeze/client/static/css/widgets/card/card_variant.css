@@ -1,43 +1,39 @@
-.tz-card .tz-line {
-    color: inherit;
-}
-
 .tz-card-primary {
+    --tz-card-border-color: var(--tz-color-primary);
     color: var(--tz-color-primary);
-    border-color: currentColor;
 }
 
 .tz-card-secondary {
+    --tz-card-border-color: var(--tz-color-secondary);
     color: var(--tz-color-secondary);
-    border-color: currentColor;
 }
 
 .tz-card-tertiary {
+    --tz-card-border-color: var(--tz-color-tertiary);
     color: var(--tz-color-tertiary);
-    border-color: currentColor;
 }
 
 .tz-card-success {
+    --tz-card-border-color: var(--tz-color-success);
     color: var(--tz-color-success);
-    border-color: currentColor;
 }
 
 .tz-card-warning {
+    --tz-card-border-color: var(--tz-color-warning);
     color: var(--tz-color-warning);
-    border-color: currentColor;
 }
 
 .tz-card-danger {
+    --tz-card-border-color: var(--tz-color-danger);
     color: var(--tz-color-danger);
-    border-color: currentColor;
 }
 
 .tz-card-info {
+    --tz-card-border-color: var(--tz-color-info);
     color: var(--tz-color-info);
-    border-color: currentColor;
 }
 
 .tz-card-muted {
+    --tz-card-border-color: var(--tz-color-text-muted);
     color: var(--tz-color-text-muted);
-    border-color: currentColor;
 }

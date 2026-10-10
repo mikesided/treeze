@@ -20,6 +20,8 @@ from ...core.widget import Widget
 class Layout(Container, ABC):
 
     _CSS_CLASS = 'tz-layout'
+    _STYLE_PREFIX = None
+    _VARIANT_PREFIX = None
     _SUPPORTED_VARIANTS = (
         Variant.PRIMARY,
         Variant.SECONDARY,

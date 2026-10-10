@@ -23,7 +23,11 @@ class Line(Widget):
     although `color` will not render a gradient, while `border_color` will.
     """
 
+    _STYLE_TYPE = LineStyle
+    _DEFAULT_STYLE = LineStyle.SOLID
     _CSS_CLASS = 'tz-line'
+    _STYLE_PREFIX = None
+    _VARIANT_PREFIX = None
     _SUPPORTED_VARIANTS = (
         Variant.PRIMARY,
         Variant.SECONDARY,
@@ -35,8 +39,6 @@ class Line(Widget):
         Variant.MUTED,
         Variant.STRONG,
     )
-    _STYLE_TYPE = LineStyle
-    _DEFAULT_STYLE = LineStyle.SOLID
 
     def __init__(
         self,
