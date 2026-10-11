@@ -3,7 +3,10 @@ import { createPatchHandler } from './patches.js';
 
 const applyPatch = createPatchHandler({ createElement, applyAttribute, applyStyle });
 
-const socket = new WebSocket('ws://localhost:8000/ws');
+const socketUrl = new URL('/ws', window.location.href);
+socketUrl.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+const socket = new WebSocket(socketUrl);
 
 
 socket.onopen = () => {
