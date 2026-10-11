@@ -33,7 +33,7 @@ def render_index() -> str:
     </head>
     <body>
         <div id="tz-root"></div>
-        <script src="/_treeze_static/client.js"></script>
+        <script type="module" src="/_treeze_static/client.js"></script>
     </body>
 </html>
 '''
