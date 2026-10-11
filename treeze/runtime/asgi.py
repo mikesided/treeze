@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 import traceback
+import asyncio
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
@@ -16,7 +17,6 @@ from fastapi.staticfiles import StaticFiles
 
 from .protocol import (
     ServerDialogMessage,
-    ServerPatchesMessage,
     ServerRenderMessage,
 )
 
@@ -66,6 +66,7 @@ def create_asgi_app(app: App) -> FastAPI:
         await ws.accept()
 
         session: Session | None = None
+        sender: asyncio.Task | None = None
 
         try:
 
@@ -79,20 +80,22 @@ def create_asgi_app(app: App) -> FastAPI:
                 ).to_protocol_message().to_dict()
             )
 
+            async def send_updates():
+                while True:
+                    await ws.send_json(await session._outgoing.get())
+
+            sender = asyncio.create_task(send_updates())
+
             while True:
                 client_message = await ws.receive_json()
 
                 try:
                     patches = session._handle_message(client_message)
 
-                    if patches:
-                        await ws.send_json(
-                            ServerPatchesMessage(
-                                patches=patches,
-                            ).to_protocol_message().to_dict()
-                        )
+                    session._publish_update(patches)
 
                 except TreezeError as error:
+                    session._pending_actions.clear()
                     print(traceback.format_exc())
 
                     await ws.send_json(
@@ -128,6 +131,9 @@ def create_asgi_app(app: App) -> FastAPI:
             )
 
         finally:
+            if sender is not None:
+                sender.cancel()
+                await asyncio.gather(sender, return_exceptions=True)
             if session is not None:
                 app._close_session(session)
 

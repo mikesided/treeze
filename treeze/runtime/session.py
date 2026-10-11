@@ -6,19 +6,22 @@ Description:  Runtime session for one connected browser
 # ______________________________________________________________________________________________________________________
 # Imports
 from __future__ import annotations
+import asyncio
 from datetime import datetime, timezone
 from typing import Any, TYPE_CHECKING
 import uuid
 
 from .patch_engine import PatchEngine
 from .patches import diff_nodes
-from .protocol import ClientSignalMessage
+from .protocol import ClientSignalMessage, ServerActionsMessage, ServerPatchesMessage
 
 from ..core.exceptions import TreezeRuntimeError
 from ..core.node import Node
+from ..core.client_action import ClientAction
 from ..core.validation import Validator
 
 from ..utils.ids import create_id_scope, use_id_scope
+from ..utils.session_context import use_session
 
 if TYPE_CHECKING:
     from ..core.app import App
@@ -67,10 +70,13 @@ class Session:
 
         self._dirty_widgets: set[Widget] = set()
         self._patch_engine = PatchEngine()
+        self._outgoing: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
+        self._pending_actions: list[dict[str, Any]] = []
+        self._handling_message = False
 
         self.id_scope = create_id_scope()
 
-        with use_id_scope(self.id_scope):
+        with use_session(self), use_id_scope(self.id_scope):
             # Session contains one main initialized window (generated from the app)
             self._window = app._create_window()
 
@@ -112,16 +118,15 @@ class Session:
         if self.closed:
             raise TreezeRuntimeError('Cannot build a closed session.')
 
-        node_tree = self.app._build_window(self.window)
-
-        self._index_widgets()
-        self._patch_engine.capture_tree(node_tree)
-
-        self._clear_dirty_state()
+        with use_session(self), use_id_scope(self.id_scope):
+            node_tree = self.app._build_window(self.window)
+            self._index_widgets()
+            self._patch_engine.capture_tree(node_tree)
+            self._clear_dirty_state()
 
         return node_tree
 
-    def _handle_message(self, message: dict[str, Any]) -> None:
+    def _handle_message(self, message: dict[str, Any]) -> list[dict[str, Any]]:
         """
         Handle a client message for this session.
 
@@ -139,13 +144,18 @@ class Session:
         message_type = Validator.ensure(message.get('type'), str)
         payload = Validator.ensure(message.get('payload'), dict)
 
-        with use_id_scope(self.id_scope):
+        with use_session(self), use_id_scope(self.id_scope):
             match message_type:
                 case 'client.signal':
-                    self._dirty_widgets.clear()
-
                     signal_message = ClientSignalMessage.from_payload(payload)
-                    self._handle_signal_message(signal_message)
+                    self._handling_message = True
+                    try:
+                        self._handle_signal_message(signal_message)
+                    except BaseException:
+                        self._pending_actions.clear()
+                        raise
+                    finally:
+                        self._handling_message = False
 
                     self._index_widgets()
 
@@ -173,11 +183,35 @@ class Session:
                 f'Trying to find widget for client signal but no widget found for id {message.widget_id!r}.'
             )
 
-        widget._emit_signal(
-            message.signal,
-            *message.args,
-            **(message.kwargs or {}),
+        # Browser-bound actions already ran in the browser event handler.
+        browser_bound = widget._node is not None and any(
+            binding.signal == message.signal for binding in widget._node.events.values()
         )
+        widget._get_signal(message.signal)._emit(
+            message.args,
+            message.kwargs or {},
+            execute_actions=not browser_bound,
+        )
+
+    def _queue_client_action(self, action: ClientAction) -> None:
+        if self.closed:
+            raise TreezeRuntimeError('Cannot execute a client action on a closed session.')
+        payload = action.serialize()
+        if self._handling_message:
+            self._pending_actions.append(payload)
+        else:
+            self._outgoing.put_nowait(
+                ServerActionsMessage(actions=(payload,)).to_protocol_message().to_dict()
+            )
+
+    def _publish_update(self, patches: list[dict[str, Any]]) -> None:
+        """Send patches and their one-time actions together, in execution order."""
+        actions = tuple(self._pending_actions)
+        self._pending_actions.clear()
+        if patches or actions:
+            self._outgoing.put_nowait(
+                ServerPatchesMessage(patches=patches, actions=actions).to_protocol_message().to_dict()
+            )
 
     def _index_widgets(self) -> None:
         """Walk all widgets of the app and store them on self for reference"""
@@ -193,6 +227,9 @@ class Session:
             return
 
         self._closed = True
+        self._pending_actions.clear()
+        while not self._outgoing.empty():
+            self._outgoing.get_nowait()
 
     def _mark_widget_dirty(self, widget: Widget) -> None:
         if self.closed:

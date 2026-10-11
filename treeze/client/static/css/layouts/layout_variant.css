@@ -1,46 +1,62 @@
 .tz-layout-primary {
+    --tz-layout-background: var(--tz-color-primary);
+    --tz-layout-border-color: var(--tz-color-primary-active);
     color: var(--tz-color-on-primary);
     background: var(--tz-color-primary);
     border-color: var(--tz-color-primary-active);
 }
 
 .tz-layout-secondary {
+    --tz-layout-background: var(--tz-color-secondary);
+    --tz-layout-border-color: var(--tz-color-secondary-active);
     color: var(--tz-color-on-secondary);
     background: var(--tz-color-secondary);
     border-color: var(--tz-color-secondary-active);
 }
 
 .tz-layout-tertiary {
+    --tz-layout-background: var(--tz-color-tertiary);
+    --tz-layout-border-color: var(--tz-color-tertiary-active);
     color: var(--tz-color-on-tertiary);
     background: var(--tz-color-tertiary);
     border-color: var(--tz-color-tertiary-active);
 }
 
 .tz-layout-success {
+    --tz-layout-background: var(--tz-color-success);
+    --tz-layout-border-color: var(--tz-color-success-active);
     color: var(--tz-color-on-success);
     background: var(--tz-color-success);
     border-color: var(--tz-color-success-active);
 }
 
 .tz-layout-warning {
+    --tz-layout-background: var(--tz-color-warning);
+    --tz-layout-border-color: var(--tz-color-warning-active);
     color: var(--tz-color-on-warning);
     background: var(--tz-color-warning);
     border-color: var(--tz-color-warning-active);
 }
 
 .tz-layout-danger {
+    --tz-layout-background: var(--tz-color-danger);
+    --tz-layout-border-color: var(--tz-color-danger-active);
     color: var(--tz-color-on-danger);
     background: var(--tz-color-danger);
     border-color: var(--tz-color-danger-active);
 }
 
 .tz-layout-info {
+    --tz-layout-background: var(--tz-color-info);
+    --tz-layout-border-color: var(--tz-color-info-active);
     color: var(--tz-color-on-info);
     background: var(--tz-color-info);
     border-color: var(--tz-color-info-active);
 }
 
 .tz-layout-muted {
+    --tz-layout-background: var(--tz-color-surface-hover);
+    --tz-layout-border-color: var(--tz-color-border);
     color: var(--tz-color-text-muted);
     background: var(--tz-color-surface-hover);
     border-color: var(--tz-color-border);

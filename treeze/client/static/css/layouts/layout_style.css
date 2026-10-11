@@ -1,6 +1,6 @@
 .tz-layout-plain {
     padding: 0;
-    background: transparent;
+    background: var(--tz-layout-background, transparent);
     border: 0;
     border-radius: 0;
     box-shadow: none;
@@ -8,22 +8,22 @@
 
 .tz-layout-panel {
     padding: var(--tz-layout-padding, 16px);
-    background: var(--tz-color-surface);
-    border: 1px solid var(--tz-color-border);
+    background: var(--tz-layout-background, var(--tz-color-surface));
+    border: 1px solid var(--tz-layout-border-color, var(--tz-color-border));
     border-radius: var(--tz-radius-md);
     box-shadow: none;
 }
 
 .tz-layout-outlined {
     background: transparent;
-    border: 1px solid var(--tz-color-border);
+    border: 1px solid var(--tz-layout-border-color, var(--tz-color-border));
     border-radius: var(--tz-radius-md);
     box-shadow: none;
 }
 
 .tz-layout-elevated {
     padding: var(--tz-layout-padding, 16px);
-    background: var(--tz-color-surface);
+    background: var(--tz-layout-background, var(--tz-color-surface));
     border: 0;
     border-radius: var(--tz-radius-md);
     box-shadow:

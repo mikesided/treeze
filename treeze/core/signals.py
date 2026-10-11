@@ -11,7 +11,9 @@ import inspect
 from collections.abc import Callable
 from typing import Any, Protocol, overload, TYPE_CHECKING
 
+from .client_action import ClientAction
 from .exceptions import TreezeRuntimeError
+from .validation import Validator
 
 if TYPE_CHECKING:
     from .widget import Widget
@@ -22,6 +24,12 @@ if TYPE_CHECKING:
 class SignalOwner(Protocol):
     """Typing helper. Not a real concept."""
     def _get_signal(self, name: str) -> BoundSignal:
+        ...
+
+    def _mark_dirty(self) -> None:
+        ...
+
+    def execute(self, action: ClientAction) -> None:
         ...
 
 class Signal:
@@ -96,6 +104,7 @@ class BoundSignal:
         self._name = name
         self._arg_types = arg_types
         self._callbacks: list[tuple[Callable[..., Any], bool]] = []
+        self._actions: list[ClientAction] = []
 
     @property
     def owner(self) -> SignalOwner:
@@ -112,6 +121,29 @@ class BoundSignal:
     def connect(self, callback: Callable[..., Any]) -> None:
         """Connect a public callback to be called when this signal emits."""
         self._connect(callback, internal=False)
+
+    def bind(self, action: ClientAction) -> None:
+        """Bind a browser action, independently of Python callbacks."""
+        Validator.ensure(action, ClientAction)
+        self._actions.append(action)
+        self._owner._mark_dirty()
+
+    def unbind(self, action: ClientAction | None = None) -> None:
+        """Remove one bound action, or all bound actions if None."""
+        if action is None:
+            if not self._actions:
+                return
+            self._actions.clear()
+        else:
+            try:
+                self._actions.remove(action)
+            except ValueError:
+                raise TreezeRuntimeError(f'Action is not bound to signal {self._name!r}.') from None
+        self._owner._mark_dirty()
+
+    @property
+    def actions(self) -> tuple[ClientAction, ...]:
+        return tuple(self._actions)
         
     def disconnect(self, callback: Callable[..., Any] | None = None) -> None:
         """Disconnect a public callback, or all public callbacks if None."""
@@ -164,16 +196,24 @@ class BoundSignal:
         )
 
     def emit(self, *args: Any, **kwargs: Any) -> None:
-        """Trigger all callbacks for this signal"""
+        """Trigger Python callbacks and queue bound actions for the browser."""
+        self._emit(args, kwargs, execute_actions=True)
+
+    def _emit(self, args: tuple[Any, ...], kwargs: dict[str, Any], *, execute_actions: bool) -> None:
         self._validate_emit_arguments(args, kwargs)
+        actions = tuple(self._actions)
 
         for callback, _ in tuple(self._callbacks):
             self._validate_callback_signature(callback, args, kwargs)
 
             callback(*args, **kwargs)
 
+        if execute_actions:
+            for action in actions:
+                self._owner.execute(action)
+
     def has_connections(self) -> bool:
-        return bool(self._callbacks)
+        return bool(self._callbacks or self._actions)
     
     def _validate_emit_arguments(
             self,

@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 from .enums import EventData
+from .client_action import ClientAction
 
 # ______________________________________________________________________________________________________________________
 
@@ -19,14 +20,16 @@ JsonValue = str | int | float | bool | None
 
 @dataclass(slots=True)
 class EventBinding:
-    signal: str
+    signal: str | None = None
     args: tuple[JsonValue, ...] = ()
     kwargs: dict[str, JsonValue] = field(default_factory=dict)
     data: tuple[EventData | str, ...] = ()
+    actions: tuple[ClientAction, ...] = ()
 
     def serialize(self) -> dict:
         return {
             'signal': self.signal,
+            'actions': [action.serialize() for action in self.actions],
             'args': list(self.args),
             'kwargs': self.kwargs,
             'data': [
@@ -34,4 +37,3 @@ class EventBinding:
                 for item in self.data
             ],
         }
-        

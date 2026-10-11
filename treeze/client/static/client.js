@@ -64,6 +64,10 @@ function handleMessage(message) {
             handleDialogMessage(message.payload);
             return;
 
+        case 'server.actions':
+            executeActions(message.payload.actions ?? []);
+            return;
+
         default:
             console.warn('Unknown Treeze message:', message);
     }
@@ -88,6 +92,33 @@ function handlePatchesMessage(payload) {
 
     for (const patch of payload.patches ?? []) {
         applyPatch(patch);
+    }
+    executeActions(payload.actions ?? []);
+}
+
+
+function executeActions(actions) {
+    for (const action of actions) {
+        try {
+            switch (action.type) {
+                case 'open_url': {
+                    const url = new URL(action.url, document.baseURI);
+                    if (!['http:', 'https:', 'mailto:', 'tel:'].includes(url.protocol)) {
+                        throw new Error(`Unsupported URL protocol: ${url.protocol}`);
+                    }
+                    if (action.new_tab) {
+                        window.open(url.href, '_blank', 'noopener,noreferrer');
+                    } else {
+                        window.location.assign(url.href);
+                    }
+                    break;
+                }
+                default:
+                    console.warn('Unknown Treeze client action:', action);
+            }
+        } catch (error) {
+            console.error('Treeze client action failed:', action, error);
+        }
     }
 }
 
@@ -195,7 +226,14 @@ function applyStyle(element, name, value) {
 function bindEvents(element, events, widgetId) {
     for (const [browserEvent, eventConfig] of Object.entries(events)) {
         element.addEventListener(browserEvent, (event) => {
+            if (element.matches(':disabled')) {
+                return;
+            }
             const signalConfig = normalizeSignalConfig(eventConfig);
+            executeActions(signalConfig.actions);
+            if (!signalConfig.signal) {
+                return;
+            }
             const eventArgs = collectEventArgs(
                 element,
                 event,
@@ -223,6 +261,7 @@ function normalizeSignalConfig(eventConfig) {
             args: [],
             kwargs: {},
             data: [],
+            actions: [],
         };
     }
 
@@ -231,6 +270,7 @@ function normalizeSignalConfig(eventConfig) {
         args: eventConfig.args ?? [],
         kwargs: eventConfig.kwargs ?? {},
         data: eventConfig.data ?? [],
+        actions: eventConfig.actions ?? [],
     };
 }
 

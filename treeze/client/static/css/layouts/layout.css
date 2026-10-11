@@ -1,4 +1,8 @@
 .tz-layout {
+    /* Each layout starts with its own palette, rather than its parent's. */
+    --tz-layout-background: initial;
+    --tz-layout-border-color: initial;
+
     display: flex;
     min-width: 0;
     min-height: 0;
@@ -11,4 +15,3 @@
 .tz-layout-vertical {
     flex-direction: column;
 }
-

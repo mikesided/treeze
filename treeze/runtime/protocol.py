@@ -19,6 +19,7 @@ MessageType = Literal[
     'server.render',
     'server.patches',
     'server.dialog',
+    'server.actions',
 ]
 
 
@@ -67,14 +68,24 @@ class ServerRenderMessage:
 @dataclass(frozen=True)
 class ServerPatchesMessage:
     patches: list[dict[str, Any]]
+    actions: tuple[dict[str, Any], ...] = ()
 
     def to_protocol_message(self) -> ProtocolMessage:
         return ProtocolMessage(
             type='server.patches',
             payload={
                 'patches': self.patches,
+                'actions': list(self.actions),
             },
         )
+
+
+@dataclass(frozen=True)
+class ServerActionsMessage:
+    actions: tuple[dict[str, Any], ...]
+
+    def to_protocol_message(self) -> ProtocolMessage:
+        return ProtocolMessage(type='server.actions', payload={'actions': list(self.actions)})
 
 
 @dataclass(frozen=True)

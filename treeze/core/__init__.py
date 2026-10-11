@@ -8,6 +8,7 @@ Description:  Module init file for treeze.core
 from .app import App
 from .signals import Signal
 from .widget import Widget
+from .client_action import ClientAction
 
 from .enums import (
     Color,

@@ -98,7 +98,6 @@ class Window(Widget):
     def _render(self) -> Node:
         node = Node(
             id=self.id,
-            id=self.id,
             tag='div',
             classes=self._classes(),
             styles=self._styles(),

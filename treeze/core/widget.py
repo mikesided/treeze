@@ -6,6 +6,7 @@ Description:  A Widget is a high level UI element that renders into various node
 # ______________________________________________________________________________________________________________________
 # Imports
 from __future__ import annotations
+from dataclasses import replace
 from enum import StrEnum
 from typing import Any, ClassVar, TYPE_CHECKING
 from abc import ABC, abstractmethod
@@ -14,11 +15,13 @@ from itertools import count
 from .enums import Color, Orientation, SizePolicy, Variant
 from .exceptions import TreezeValueError, TreezeRuntimeError, TreezeTypeError
 from .signals import BoundSignal, Signal
+from .client_action import ClientAction
 from .types.size import Size
 from .types.gradients import ConeGradient, LinearGradient, RadialGradient
 from .validation import Validator
 
 from ..utils.ids import create_widget_id
+from ..utils.session_context import get_current_session
 
 # Forward Declarations
 if TYPE_CHECKING:
@@ -142,6 +145,10 @@ class Widget(ABC):
         classes: list[str] | None = None,
         parent: Container | None = None,
     ):
+        # Establish ownership before setters run, without tracking partial initialization.
+        object.__setattr__(self, '_suspend_dirty_tracking', True)
+        object.__setattr__(self, '_session', get_current_session())
+
         # Map short codes to their original values
         if hsp and horizontal_size_policy is None:
             horizontal_size_policy = hsp
@@ -151,9 +158,7 @@ class Widget(ABC):
         # Internal properties
         self._id = create_widget_id()
         self._node: Node | None = None
-        self._session: Session = None
         self._dirty: bool = False
-        self._suspend_dirty_tracking: bool = False
         
         self._signals: dict[str, BoundSignal] = {}
         self._container_orientation: Orientation | None = None  # Maintained by `_set_parent`: holds the container's orientation
@@ -242,6 +247,9 @@ class Widget(ABC):
         if parent is not None and parent._CHILDHOST is True:
             # Ugly - no direct link to a container, but will do as long as only containers can be child hosts
             parent._add_widget(self)
+
+        self._suspend_dirty_tracking = False
+        self._mark_dirty()
 
     # ==========================================================================
     #  Properties
@@ -565,6 +573,14 @@ class Widget(ABC):
     # ==========================================================================
     #  Public API
     # ==========================================================================
+
+    def execute(self, action: ClientAction) -> None:
+        """Queue a one-time browser action on this widget"""
+        if self._session is None:
+            raise TreezeRuntimeError(
+                'Cannot execute a client action without an active session.'
+            )
+        self._session._queue_client_action(Validator.ensure(action, ClientAction))
 
     def unparent(self) -> None:
         """Remove this widget from its parent"""
@@ -900,10 +916,18 @@ class Widget(ABC):
     def _build(self) -> Node:
         """Render as a node, retain and return"""
         # TODO: implement dirty flags to use caching
+        # NOTE: do we still need this? investigate. Does the patch engine solve this requirement?
         #if self._node is None:
         #    self._node = self._render()
             
         self._node = self._render()
+
+        for browser_event, binding in tuple(self._node.events.items()):
+            if binding.signal is not None:
+                actions = self._get_signal(binding.signal).actions
+                self._node.events[browser_event] = replace(
+                    binding, actions=(*binding.actions, *actions),
+                )
 
         return self._node
 

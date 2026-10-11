@@ -5,7 +5,7 @@ Description:  Base class for a Button widget
 """
 # ______________________________________________________________________________________________________________________
 # Imports
-from ...core.enums import BrowserEvent, ButtonStyle, InsertPosition, Variant
+from ...core.enums import BrowserEvent, ButtonStyle, ImageStyle, InsertPosition, Variant
 from ...core.events import EventBinding
 from ...core.node import Node
 from ...core.types.size import Size
@@ -56,7 +56,7 @@ class Button(Container):
         super().__init__(*args, **kwargs)
         self._icon_position = icon_position
         self._label: Label = Label(parent=self)
-        self._image: Image = Image(margin=(0, 5, 0, 5), parent=self)
+        self._image: Image = Image(margin=(0, 5, 0, 5), style=ImageStyle.FIT, parent=self)
 
         if text:
             self.text = text
