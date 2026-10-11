@@ -8,11 +8,12 @@ Description:  Signals base classes
 # Imports
 from __future__ import annotations
 import inspect
+from types import UnionType
 from collections.abc import Callable
-from typing import Any, Protocol, overload, TYPE_CHECKING
+from typing import Any, Protocol, Union, get_args, overload, TYPE_CHECKING
 
 from .client_action import ClientAction
-from .exceptions import TreezeRuntimeError
+from .exceptions import TreezeRuntimeError, TreezeTypeError
 from .validation import Validator
 
 if TYPE_CHECKING:
@@ -20,6 +21,21 @@ if TYPE_CHECKING:
 
 
 # ______________________________________________________________________________________________________________________
+
+def _validate_arg_types(arg_types: tuple[type, ...], *, attr_name: str) -> tuple[type, ...]:
+    Validator.ensure(arg_types, tuple, attr_name=attr_name)
+    for index, arg_type in enumerate(arg_types):
+        name = f'{attr_name}[{index}]'
+        Validator.ensure(arg_type, type, UnionType, type(Union[int, str]), attr_name=name)
+        if isinstance(arg_type, (UnionType, type(Union[int, str]))):
+            _validate_arg_types(get_args(arg_type), attr_name=name)
+        try:
+            # Reject generics and other types unsupported by runtime isinstance checks.
+            isinstance(None, arg_type)
+        except TypeError as error:
+            raise TreezeTypeError(f'{name}: must support runtime type checks.') from error
+    return arg_types
+
 
 class SignalOwner(Protocol):
     """Typing helper. Not a real concept."""
@@ -37,7 +53,7 @@ class Signal:
     Class-level signal.
     """
     def __init__(self, *arg_types: type):
-        self.arg_types = arg_types
+        self.arg_types = _validate_arg_types(arg_types, attr_name='Signal(arg_types=...)')
         self._name = None
 
     def __set_name__(self, owner: type[Any], name: str) -> None:
@@ -101,8 +117,8 @@ class BoundSignal:
             arg_types: tuple[type, ...] = (),
         ):
         self._owner = owner
-        self._name = name
-        self._arg_types = arg_types
+        self._name = Validator.ensure(name, str, attr_name='BoundSignal(name=...)')
+        self._arg_types = _validate_arg_types(arg_types, attr_name='BoundSignal(arg_types=...)')
         self._callbacks: list[tuple[Callable[..., Any], bool]] = []
         self._actions: list[ClientAction] = []
 
@@ -124,12 +140,13 @@ class BoundSignal:
 
     def bind(self, action: ClientAction) -> None:
         """Bind a browser action, independently of Python callbacks."""
-        Validator.ensure(action, ClientAction)
+        Validator.ensure(action, ClientAction, attr_name='BoundSignal.bind(action=...)')
         self._actions.append(action)
         self._owner._mark_dirty()
 
     def unbind(self, action: ClientAction | None = None) -> None:
         """Remove one bound action, or all bound actions if None."""
+        Validator.ensure(action, ClientAction, None, attr_name='BoundSignal.unbind(action=...)')
         if action is None:
             if not self._actions:
                 return
@@ -239,13 +256,13 @@ class BoundSignal:
         for index, expected_type in enumerate(self._arg_types):
             value = args[index]
 
-            if not isinstance(value, expected_type):
-                raise TreezeRuntimeError(
-                    f'Signal {self._name!r} expected argument {index} to be '
-                    f'{self._format_type(expected_type)}, '
-                    f'but got {type(value).__name__}. '
-                    f'Value: {value!r}.'
+            try:
+                Validator.ensure(
+                    value, expected_type,
+                    attr_name=f'{type(self._owner).__name__}.{self._name}.emit(args[{index}])',
                 )
+            except TreezeTypeError as error:
+                raise TreezeRuntimeError(f'{error}. Value: {value!r}.') from error
             
     def _validate_callback_accepts_declared_args(
             self,

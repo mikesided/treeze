@@ -55,11 +55,6 @@ class App(Server):
         return self._id
 
     @property
-    def source_file(self) -> Path:
-        """The file where this App instance was created."""
-        return self._source_file
-
-    @property
     def window(self) -> type[Window] | None:
         """
         The Window class used by the app.
@@ -74,11 +69,10 @@ class App(Server):
             self._window_class = None
             return
 
-        if not isinstance(window, type):
-            raise TreezeTypeError('App window must be a Window class, not a Window instance.')
+        Validator.ensure(window, type, attr_name='App.window')
 
         if not issubclass(window, Window):
-            raise TreezeTypeError('App window must inherit from Window.')
+            raise TreezeTypeError('App.window: must be a class inheriting from Window.')
 
         self._window_class = window
 
@@ -97,21 +91,25 @@ class App(Server):
         Holds the theme to be used by the app.
         Override granularly through `self.theme`
         """
-        self._theme_preset = Validator.ensure(theme, TreezeTheme)
+        self._theme_preset = Validator.ensure(theme, TreezeTheme, attr_name='App.theme_preset')
 
     @property
-    def resources(self) -> list[str]:
+    def resources(self) -> dict[str, str]:
         return self._resources
 
     @resources.setter
-    def resources(self, resources=dict[str, str]):
+    def resources(self, resources: dict[str, str]):
         """
         Sets the available resource dirs and their name.
 
         The key represents the name of the resource. The name will explose http://my-app.com/{name}
         The value represents a relative path to the main file running the App()
         """
-        self._resources = Validator.ensure(resources, dict)
+        Validator.ensure(resources, dict, attr_name='App.resources')
+        for key, value in resources.items():
+            Validator.ensure(key, str, attr_name=f'App.resources.keys[{key!r}]')
+            Validator.ensure(value, str, attr_name=f'App.resources[{key!r}]')
+        self._resources = resources
 
 
     # ==========================================================================
@@ -162,7 +160,7 @@ class App(Server):
         This is used by the runtime so each websocket/session can keep its own
         window instance.
         """
-        window = Validator.ensure(window, Window)
+        window = Validator.ensure(window, Window, attr_name='App._build_window(window=...)')
 
         node_tree = Node(
             id=self.id,

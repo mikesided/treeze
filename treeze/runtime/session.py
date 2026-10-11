@@ -140,9 +140,9 @@ class Session:
         if self.closed:
             raise TreezeRuntimeError('Cannot handle messages on a closed session.')
 
-        message = Validator.ensure(message, dict)
-        message_type = Validator.ensure(message.get('type'), str)
-        payload = Validator.ensure(message.get('payload'), dict)
+        message = Validator.ensure(message, dict, attr_name='Session._handle_message(message=...)')
+        message_type = Validator.ensure(message.get('type'), str, attr_name='client.signal.type')
+        payload = Validator.ensure(message.get('payload'), dict, attr_name='client.signal.payload')
 
         with use_session(self), use_id_scope(self.id_scope):
             match message_type:
@@ -183,14 +183,27 @@ class Session:
                 f'Trying to find widget for client signal but no widget found for id {message.widget_id!r}.'
             )
 
-        # Browser-bound actions already ran in the browser event handler.
+        # Check server-owned state; browser attributes cannot authorize a signal.
+        owner = widget
+        while owner is not None:
+            if owner.enabled is False:
+                return
+            owner = owner.parent
+
         browser_bound = widget._node is not None and any(
             binding.signal == message.signal for binding in widget._node.events.values()
         )
+        if not browser_bound:
+            raise TreezeRuntimeError(
+                f'Signal {message.signal!r} on widget {message.widget_id!r} '
+                'is not exposed to browser events.'
+            )
+
+        # Browser-bound actions already ran in the browser event handler.
         widget._get_signal(message.signal)._emit(
             message.args,
             message.kwargs or {},
-            execute_actions=not browser_bound,
+            execute_actions=False,
         )
 
     def _queue_client_action(self, action: ClientAction) -> None:

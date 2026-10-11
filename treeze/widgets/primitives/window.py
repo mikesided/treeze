@@ -12,8 +12,9 @@ from typing import Iterator
 
 from ..bases.layout import Layout
 
-from ...core.exceptions import TreezeRuntimeError
+from ...core.exceptions import TreezeRuntimeError, TreezeValueError
 from ...core.node import Node
+from ...core.signals import Signal
 from ...core.validation import Validator
 from ...core.widget import Widget
 
@@ -41,6 +42,8 @@ class Window(Widget):
     _CSS_CLASS = 'tz-window'
     _STYLE_PREFIX = None
     _VARIANT_PREFIX = None
+
+    layout_changed = Signal(Widget | None, Widget | None)
     def __init__(
             self,
             layout: Layout | None = None,
@@ -53,7 +56,7 @@ class Window(Widget):
                 'Assign the Window class to App.window and call app.run().'
             )
         super().__init__(*args, **kwargs)
-        self._layout: Layout = None
+        self._layout: Layout | None = None
 
         self.layout = layout
 
@@ -68,7 +71,13 @@ class Window(Widget):
 
     @layout.setter
     def layout(self, layout: Layout | None):
-        layout = Validator.ensure(layout, Layout, None)
+        layout = Validator.ensure(layout, Layout, None, attr_name='Window.layout')
+
+        if layout is self._layout:
+            return
+
+        if layout is not None:
+            layout.unparent()
 
         if self._layout is not None:
             self._layout._set_parent(None)
@@ -84,6 +93,20 @@ class Window(Widget):
     # ==========================================================================
     #  Private
     # ==========================================================================
+
+    def _remove_widget(self, widget: Widget) -> None:
+        """Detach the window's root layout through the common parent removal API."""
+        old_layout = self.layout
+        Validator.ensure(widget, Widget, attr_name='Window._remove_widget(widget=...)')
+        if widget is not self._layout:
+            raise TreezeValueError("Window._remove_widget(widget=...): widget is not this window's layout.")
+
+        self.layout = None
+        widget._set_parent(None)
+
+        if old_layout != self.layout:
+            self.layout_changed.emit(old_layout, self.layout)
+            self._mark_dirty()
 
     def _walk_widgets(self):
         yield self

@@ -37,7 +37,6 @@ class Card(VLayout):
         Variant.MUTED,
     )
 
-    clicked = Signal()
     def __init__(
         self, 
         header: Container | None = None,
@@ -51,9 +50,9 @@ class Card(VLayout):
         # Init widgets
         self._upper_separator = HLine(variant=Variant.STRONG)
         self._lower_separator = HLine(variant=Variant.STRONG)
-        self._header = Validator.ensure(header, Container, None) or HLayout()
-        self._body = Validator.ensure(body, Container, None) or VLayout()
-        self._footer = Validator.ensure(footer, Container, None) or HLayout()
+        self._header = Validator.ensure(header, Container, None, attr_name='Card(header=...)') or HLayout()
+        self._body = Validator.ensure(body, Container, None, attr_name='Card(body=...)') or VLayout()
+        self._footer = Validator.ensure(footer, Container, None, attr_name='Card(footer=...)') or HLayout()
 
         # Add Composite classes
         self.upper_separator._composite_classes.append('card-separator')

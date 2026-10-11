@@ -11,6 +11,7 @@ from dataclasses import dataclass, field, fields
 from enum import StrEnum
 
 from ..exceptions import TreezeTypeError, TreezeValueError
+from ..validation import Validator
 from .gradients import ConeGradient, LinearGradient, RadialGradient
 
 # ______________________________________________________________________________________________________________________
@@ -222,36 +223,34 @@ class Theme:
             return None
 
         if isinstance(value, bool):
-            raise TreezeTypeError(f'Theme value {name!r} cannot be a boolean.')
+            raise TreezeTypeError(f'Theme.{name}: cannot be a boolean.')
 
         match css_kind:
             case 'color':
-                if not isinstance(value, str | StrEnum | LinearGradient):
-                    raise TreezeTypeError(f'Theme color {name!r} must be a string, Color, LinearGradient, or None.')
+                Validator.ensure(value, str, StrEnum, LinearGradient, attr_name=f'Theme.{name}')
 
                 return str(value)
 
             case 'length':
+                Validator.ensure(value, str, int, float, attr_name=f'Theme.{name}')
                 if isinstance(value, int | float):
                     return f'{value}px'
 
                 if isinstance(value, str):
                     return value
 
-                raise TreezeTypeError(f'Theme length {name!r} must be a string, number, or None.')
 
             case 'number':
+                Validator.ensure(value, str, int, float, attr_name=f'Theme.{name}')
                 if isinstance(value, int | float):
                     return str(value)
 
                 if isinstance(value, str):
                     return value
 
-                raise TreezeTypeError(f'Theme number {name!r} must be a string, number, or None.')
 
             case 'text':
-                if not isinstance(value, str):
-                    raise TreezeTypeError(f'Theme text value {name!r} must be a string or None.')
+                Validator.ensure(value, str, attr_name=f'Theme.{name}')
 
                 return value
 

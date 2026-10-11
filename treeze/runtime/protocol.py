@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Literal
+from ..core.validation import Validator
 
 # ______________________________________________________________________________________________________________________
 
@@ -44,11 +45,21 @@ class ClientSignalMessage:
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> ClientSignalMessage:
+        Validator.ensure(payload, dict, attr_name='client.signal.payload')
+        widget_id = Validator.ensure(payload.get('widget_id'), str, attr_name='client.signal.payload.widget_id')
+        signal = Validator.ensure(payload.get('signal'), str, attr_name='client.signal.payload.signal')
+        args = Validator.ensure(payload.get('args', ()), list, tuple, attr_name='client.signal.payload.args')
+        kwargs = Validator.ensure(payload.get('kwargs'), dict, None, attr_name='client.signal.payload.kwargs')
+
+        if kwargs is not None:
+            for key in kwargs:
+                Validator.ensure(key, str, attr_name=f'client.signal.payload.kwargs.keys[{key!r}]')
+                
         return cls(
-            widget_id=payload['widget_id'],
-            signal=payload['signal'],
-            args=tuple(payload.get('args', ())),
-            kwargs=payload.get('kwargs') or {},
+            widget_id=widget_id,
+            signal=signal,
+            args=tuple(args),
+            kwargs=kwargs if kwargs is not None else {},
         )
 
 

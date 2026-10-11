@@ -23,6 +23,8 @@ class Button(Container):
     """
     Clickable button.
     Contains a Label and an optional Image (icon).
+    The Label will only render if it has text
+    The Image will only render if it has a source image
 
     NOTE: Label color is inherited from the button, unless specified as an attribute
     """
@@ -54,14 +56,16 @@ class Button(Container):
         **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self._icon_position = icon_position
+        self._icon_position = Validator.ensure(icon_position, InsertPosition, attr_name='Button(icon_position=...)')
         self._label: Label = Label(parent=self)
         self._image: Image = Image(margin=(0, 5, 0, 5), style=ImageStyle.FIT, parent=self)
 
-        if text:
-            self.text = text
-        if icon:
-            self.icon = icon
+        self.text = text
+        self.icon = icon
+
+        # Listen to children changes
+        self.label.text_changed._internal_connect(self._on_content_changed)
+        self.image.source_changed._internal_connect(self._on_content_changed)
 
 
     @property
@@ -70,7 +74,7 @@ class Button(Container):
 
     @text.setter
     def text(self, text: str | None) -> None:
-        self.label.text = Validator.ensure(text, str, None)
+        self.label.text = Validator.ensure(text, str, None, attr_name='Button.text')
 
     @property
     def icon(self) -> str | None:
@@ -78,7 +82,7 @@ class Button(Container):
 
     @icon.setter
     def icon(self, icon: str | None) -> None:
-        self.image.source = icon
+        self.image.source = Validator.ensure(icon, str, None, attr_name='Button.icon')
 
     @property
     def icon_position(self) -> InsertPosition:
@@ -87,7 +91,7 @@ class Button(Container):
     @icon_position.setter
     def icon_position(self,  icon_position: InsertPosition) -> None:
         # Implementation in _render()
-        self._icon = Validator.ensure(icon_position, InsertPosition)
+        self._icon_position = Validator.ensure(icon_position, InsertPosition, attr_name='Button.icon_position')
 
     @property
     def label(self) -> Label:
@@ -96,6 +100,10 @@ class Button(Container):
     @property
     def image(self) -> Image:
         return self._image
+
+    def _on_content_changed(self, value: str | None) -> None:
+        """Rebuild children when label text or image source changes."""
+        self._mark_dirty()
 
     def _render(self) -> Node:
         node = Node(

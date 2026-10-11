@@ -34,6 +34,8 @@ class Label(Widget):
         Variant.MUTED,
     )
 
+    text_changed = Signal(str | None)
+
     def __init__(
         self,
         text: str | None = None,
@@ -43,8 +45,8 @@ class Label(Widget):
     ):
         super().__init__(*args, **kwargs)
 
-        self._text = Validator.ensure(text, str, None)
-        self._text_alignment = text_alignment
+        self._text = Validator.ensure(text, str, None, attr_name='Label(text=...)')
+        self._text_alignment = Validator.ensure(text_alignment, TextAlignment, attr_name='Label(text_alignment=...)')
 
 
     @property
@@ -53,7 +55,11 @@ class Label(Widget):
 
     @text.setter
     def text(self, text: str | None) -> None:
-        self._text = Validator.ensure(text, str, None)
+        text = Validator.ensure(text, str, None, attr_name='Label.text')
+        old_text = self._text
+        self._text = text
+        if old_text != text:
+            self.text_changed.emit(text)
 
     @property
     def text_alignment(self) -> TextAlignment:
@@ -61,7 +67,7 @@ class Label(Widget):
 
     @text_alignment.setter
     def text_alignment(self, text_alignment: TextAlignment) -> None:
-        self._text_alignment = Validator.ensure(text_alignment, TextAlignment)
+        self._text_alignment = Validator.ensure(text_alignment, TextAlignment, attr_name='Label.text_alignment')
 
     def _styles(self) -> dict[str, str]:
         styles = super()._styles()

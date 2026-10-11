@@ -8,7 +8,7 @@ Description:  Dataclass reprensenting an (x, y) size
 from __future__ import annotations
 from dataclasses import dataclass
 
-from ..exceptions import TreezeTypeError, TreezeValueError
+from ..validation import Validator
 
 # ______________________________________________________________________________________________________________________
 
@@ -19,10 +19,8 @@ class Size:
     height: int
 
     def __post_init__(self):
-        if not isinstance(self.width, int):
-            raise TreezeTypeError('width must be an int')
-        if not isinstance(self.height, int):
-            raise TreezeTypeError('height must be an int')
-        if self.width < 0 or self.height < 0:
-            raise TreezeValueError('width and height cannot be negative')
+        Validator.ensure(self.width, int, attr_name='Size.width')
+        Validator.ensure(self.height, int, attr_name='Size.height')
+        Validator.validate_dimension(self.width, attr_name='Size.width')
+        Validator.validate_dimension(self.height, attr_name='Size.height')
     

@@ -51,13 +51,14 @@ class Container(Widget, ABC):
         Adds a child widget to the layout
         If index is specified, the position's InsertPosition is ignored
         """
+        index = Validator.ensure(index, int, None, attr_name='Container._add_widget(index=...)')
+        widget = Validator.ensure(widget, Widget, attr_name='Container._add_widget(widget=...)')
+        Validator.ensure(position, InsertPosition, attr_name='Container._add_widget(position=...)')
+
         # Validate if the widget already has a parent, if so remove it
         if widget.parent:
-            widget.parent.remove_widget(widget)
+            widget.parent._remove_widget(widget)
             
-        index = Validator.ensure(index, int, None)
-        widget = Validator.ensure(widget, Widget)
-
         if index is None:
             if position == InsertPosition.FIRST:
                 index = 0
@@ -77,10 +78,10 @@ class Container(Widget, ABC):
         """
         Removes a child widget from the layout
         """
-        Validator.ensure(widget, Widget)
+        Validator.ensure(widget, Widget, attr_name='Container._remove_widget(widget=...)')
         
         if widget not in self._children:
-            raise TreezeValueError('widget is not a child of this container')
+            raise TreezeValueError('Container._remove_widget(widget=...): widget is not a child of this container.')
 
         self._children.remove(widget)
         widget._set_parent(None)

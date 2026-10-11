@@ -8,6 +8,8 @@ Description:  Base class for runnable ASGI servers
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
+from .validation import Validator
+from .exceptions import TreezeTypeError, TreezeValueError
 
 # ______________________________________________________________________________________________________________________
 
@@ -32,6 +34,12 @@ class Server(ABC):
             port: int = 8000,
         ) -> None:
         """Run the server directly."""
+        Validator.ensure(host, str, attr_name='Server.run(host=...)')
+        Validator.ensure(port, int, attr_name='Server.run(port=...)')
+        if isinstance(port, bool):
+            raise TreezeTypeError('Server.run(port=...): cannot be a boolean.')
+        if not 0 <= port <= 65535:
+            raise TreezeValueError('Server.run(port=...): must be between 0 and 65535.')
         import uvicorn
 
         uvicorn.run(

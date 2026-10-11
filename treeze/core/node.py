@@ -12,6 +12,7 @@ from enum import StrEnum
 
 
 from .events import EventBinding
+from .validation import Validator
 
 # ______________________________________________________________________________________________________________________
 
@@ -34,12 +35,13 @@ class Node():
 
     children: list[Node] = field(default_factory=list)
 
-    
     def add_child(self, child: Node, insert_index: int | None = None) -> Node:
         """
         Add a child node.
         """
-        if isinstance(insert_index, int) and insert_index >= 0:
+        Validator.ensure(child, Node, attr_name='Node.add_child(child=...)')
+        Validator.ensure(insert_index, int, None, attr_name='Node.add_child(insert_index=...)')
+        if insert_index is not None and insert_index >= 0:
             self.children.insert(insert_index, child)
         else:
             self.children.append(child)

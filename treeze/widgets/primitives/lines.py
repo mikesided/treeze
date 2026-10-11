@@ -51,6 +51,14 @@ class Line(Widget):
         self.margin = kwargs.get('margin', 0)
         self.padding = kwargs.get('padding', 0)
 
+    @property
+    def orientation(self) -> Orientation:
+        return self._orientation
+
+    @orientation.setter
+    def orientation(self, orientation: Orientation) -> None:
+        self._orientation = Validator.ensure(orientation, Orientation, attr_name='Line.orientation')
+
     def _classes(self):
         classes = super()._classes()
         classes.append(f'tz-line-{self.orientation.value}')

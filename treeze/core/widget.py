@@ -11,6 +11,7 @@ from enum import StrEnum
 from typing import Any, ClassVar, TYPE_CHECKING
 from abc import ABC, abstractmethod
 from itertools import count
+from math import isfinite
 
 from .enums import Color, Orientation, SizePolicy, Variant
 from .exceptions import TreezeValueError, TreezeRuntimeError, TreezeTypeError
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
     from .node import Node
     from ..runtime.session import Session
     from ..widgets.bases.container import Container
+    from ..widgets.primitives.window import Window
 
 # ______________________________________________________________________________________________________________________
 
@@ -134,7 +136,7 @@ class Widget(ABC):
         border_style: str | None = None,
         border_color: ColorValue | None = None,
         border_radius: int | str | None = None,
-        opacity: float | str | None = None,
+        opacity: int | float | str | None = None,
 
         # Runtime
         visible: bool = True,
@@ -149,10 +151,17 @@ class Widget(ABC):
         object.__setattr__(self, '_suspend_dirty_tracking', True)
         object.__setattr__(self, '_session', get_current_session())
 
+        for name, value in (('horizontal_size_policy', horizontal_size_policy),
+                            ('vertical_size_policy', vertical_size_policy), ('hsp', hsp), ('vsp', vsp)):
+            Validator.ensure(value, SizePolicy, None, attr_name=f'Widget({name}=...)')
+        Validator.ensure(classes, list, None, attr_name='Widget(classes=...)')
+        for index, klass in enumerate(classes or ()):
+            Validator.ensure(klass, str, attr_name=f'Widget(classes=...)[{index}]')
+
         # Map short codes to their original values
-        if hsp and horizontal_size_policy is None:
+        if hsp is not None and horizontal_size_policy is None:
             horizontal_size_policy = hsp
-        if vsp and vertical_size_policy is None:
+        if vsp is not None and vertical_size_policy is None:
             vertical_size_policy = vsp
         
         # Internal properties
@@ -164,7 +173,7 @@ class Widget(ABC):
         self._container_orientation: Orientation | None = None  # Maintained by `_set_parent`: holds the container's orientation
         self._composite_classes: list[str] = []
         self._extra_classes: list[str] = []  # Holds user-defined classes
-        self._parent: Container | None = None
+        self._parent: Container | Window | None = None
 
         # Private properties
         self._variant: Variant = Variant.DEFAULT
@@ -189,7 +198,7 @@ class Widget(ABC):
         self._border_style: str | None = None
         self._border_color: ColorValue | None = None
         self._border_radius: int | str | None = None
-        self._opacity: float | str | None = None
+        self._opacity: int | float | str | None = None
 
         self._visible: bool = True
         self._collapsed: bool = False
@@ -207,22 +216,22 @@ class Widget(ABC):
         self.padding = padding
 
         self.size_policy = size_policy
-        if horizontal_size_policy:
+        if horizontal_size_policy is not None:
             self.horizontal_size_policy = horizontal_size_policy
-        if vertical_size_policy:
+        if vertical_size_policy is not None:
             self.vertical_size_policy = vertical_size_policy
 
         self.minimum_width = minimum_width
         self.minimum_height = minimum_height
-        if minimum_size:
+        if minimum_size is not None:
             self.minimum_size = minimum_size
         self.maximum_width = maximum_width
         self.maximum_height = maximum_height
-        if maximum_size:
+        if maximum_size is not None:
             self.maximum_size = maximum_size
         self.fixed_width = fixed_width
         self.fixed_height = fixed_height
-        if fixed_size:
+        if fixed_size is not None:
             self.fixed_size = fixed_size
 
         self.color = color
@@ -243,7 +252,7 @@ class Widget(ABC):
             self.add_class(klass)
 
         # Set parent
-        parent = Validator.ensure(parent, Widget, None)
+        parent = Validator.ensure(parent, Widget, None, attr_name='Widget(parent=...)')
         if parent is not None and parent._CHILDHOST is True:
             # Ugly - no direct link to a container, but will do as long as only containers can be child hosts
             parent._add_widget(self)
@@ -261,7 +270,7 @@ class Widget(ABC):
         return tuple(self._extra_classes)
 
     @property
-    def parent(self) -> Container | None:
+    def parent(self) -> Container | Window | None:
         """Read only. The widget's parent"""
         return self._parent
     
@@ -285,7 +294,7 @@ class Widget(ABC):
     @variant.setter
     def variant(self, variant: Variant):
         """Holds the widget's style variant"""
-        variant = Validator.ensure(variant, Variant)
+        variant = Validator.ensure(variant, Variant, attr_name='Widget.variant')
 
         if variant == Variant.DEFAULT:
             self._variant = variant
@@ -293,7 +302,7 @@ class Widget(ABC):
 
         if variant not in self._SUPPORTED_VARIANTS:
             raise TreezeValueError(
-                f'{type(self).__name__} does not support variant: {variant!r}'
+                f'Widget.variant: {type(self).__name__} does not support {variant!r}.'
             )
 
         self._variant = variant
@@ -317,7 +326,7 @@ class Widget(ABC):
     
     @margin.setter
     def margin(self, margin: int | tuple[int, int, int, int] | None):
-        self._margin = None if margin is None else Validator.validate_margin(margin)
+        self._margin = Validator.validate_box(margin, attr_name='Widget.margin')
 
     @property
     def padding(self) -> tuple[int, int, int, int]:
@@ -325,7 +334,7 @@ class Widget(ABC):
     
     @padding.setter
     def padding(self, padding: int | tuple[int, int, int, int] | None):
-        self._padding = None if padding is None else Validator.validate_padding(padding)
+        self._padding = Validator.validate_box(padding, attr_name='Widget.padding')
 
     @property
     def size_policy(self) -> tuple[SizePolicy, SizePolicy]:
@@ -334,6 +343,11 @@ class Widget(ABC):
     @size_policy.setter
     def size_policy(self, size_policies: tuple[SizePolicy, SizePolicy]):
         """Convenience wrapper around horizontal & vertical size policies"""
+        Validator.ensure(size_policies, tuple, list, attr_name='Widget.size_policy')
+        if len(size_policies) != 2:
+            raise TreezeValueError('Widget.size_policy: must contain exactly 2 values.')
+        Validator.ensure(size_policies[0], SizePolicy, attr_name='Widget.size_policy[0]')
+        Validator.ensure(size_policies[1], SizePolicy, attr_name='Widget.size_policy[1]')
         self.horizontal_size_policy = size_policies[0]
         self.vertical_size_policy = size_policies[1]
 
@@ -343,7 +357,7 @@ class Widget(ABC):
 
     @horizontal_size_policy.setter
     def horizontal_size_policy(self, size_policy: SizePolicy):
-        self._horizontal_size_policy = Validator.ensure(size_policy, SizePolicy)
+        self._horizontal_size_policy = Validator.ensure(size_policy, SizePolicy, attr_name='Widget.horizontal_size_policy')
     
     @property
     def vertical_size_policy(self) -> SizePolicy:
@@ -351,7 +365,7 @@ class Widget(ABC):
 
     @vertical_size_policy.setter
     def vertical_size_policy(self, size_policy: SizePolicy):
-        self._vertical_size_policy = Validator.ensure(size_policy, SizePolicy)
+        self._vertical_size_policy = Validator.ensure(size_policy, SizePolicy, attr_name='Widget.vertical_size_policy')
 
     @property
     def minimum_width(self) -> int | None:
@@ -359,7 +373,7 @@ class Widget(ABC):
 
     @minimum_width.setter
     def minimum_width(self, width: int | None):
-        self._minimum_width = width
+        self._minimum_width = Validator.validate_dimension(width, attr_name='Widget.minimum_width')
 
     @property
     def minimum_height(self) -> int | None:
@@ -367,7 +381,7 @@ class Widget(ABC):
 
     @minimum_height.setter
     def minimum_height(self, width: int | None):
-        self._minimum_height = width
+        self._minimum_height = Validator.validate_dimension(width, attr_name='Widget.minimum_height')
 
     @property
     def minimum_size(self) -> Size | None:
@@ -377,10 +391,10 @@ class Widget(ABC):
     
     @minimum_size.setter
     def minimum_size(self, size: Size | None):
-        size = Validator.ensure(size, Size, None)
+        size = Validator.ensure(size, Size, None, attr_name='Widget.minimum_size')
         if size:
-            width = Validator.ensure(size.width, int)
-            height = Validator.ensure(size.height, int)
+            width = Validator.ensure(size.width, int, attr_name='Widget.minimum_size.width')
+            height = Validator.ensure(size.height, int, attr_name='Widget.minimum_size.height')
         else:
             width = None
             height = None
@@ -395,7 +409,7 @@ class Widget(ABC):
 
     @fixed_width.setter
     def fixed_width(self, width: int | None):
-        self._fixed_width = width
+        self._fixed_width = Validator.validate_dimension(width, attr_name='Widget.fixed_width')
 
     @property
     def fixed_height(self) -> int | None:
@@ -404,7 +418,7 @@ class Widget(ABC):
 
     @fixed_height.setter
     def fixed_height(self, width: int | None):
-        self._fixed_height = width
+        self._fixed_height = Validator.validate_dimension(width, attr_name='Widget.fixed_height')
 
     @property
     def fixed_size(self) -> Size | None:
@@ -414,10 +428,10 @@ class Widget(ABC):
     
     @fixed_size.setter
     def fixed_size(self, size: Size | None):
-        size = Validator.ensure(size, Size, None)
+        size = Validator.ensure(size, Size, None, attr_name='Widget.fixed_size')
         if size:
-            width = Validator.ensure(size.width, int)
-            height = Validator.ensure(size.height, int)
+            width = Validator.ensure(size.width, int, attr_name='Widget.fixed_size.width')
+            height = Validator.ensure(size.height, int, attr_name='Widget.fixed_size.height')
         else:
             width = None
             height = None
@@ -431,7 +445,7 @@ class Widget(ABC):
 
     @maximum_width.setter
     def maximum_width(self, width: int | None):
-        self._maximum_width = width
+        self._maximum_width = Validator.validate_dimension(width, attr_name='Widget.maximum_width')
 
     @property
     def maximum_height(self) -> int | None:
@@ -439,7 +453,7 @@ class Widget(ABC):
 
     @maximum_height.setter
     def maximum_height(self, width: int | None):
-        self._maximum_height = width
+        self._maximum_height = Validator.validate_dimension(width, attr_name='Widget.maximum_height')
     
     @property
     def maximum_size(self) -> Size | None:
@@ -449,10 +463,10 @@ class Widget(ABC):
     
     @maximum_size.setter
     def maximum_size(self, size: Size| None):
-        size = Validator.ensure(size, Size, None)
+        size = Validator.ensure(size, Size, None, attr_name='Widget.maximum_size')
         if size:
-            width = Validator.ensure(size.width, int)
-            height = Validator.ensure(size.height, int)
+            width = Validator.ensure(size.width, int, attr_name='Widget.maximum_size.width')
+            height = Validator.ensure(size.height, int, attr_name='Widget.maximum_size.height')
         else:
             width = None
             height = None
@@ -468,7 +482,7 @@ class Widget(ABC):
     def visible(self, visible):
         """Set the visibility of the widget. Still takes layout space."""
         old_state = self.visible
-        self._visible = Validator.ensure(visible, bool)
+        self._visible = Validator.ensure(visible, bool, attr_name='Widget.visible')
 
         if old_state != self.visible:
             self.visibility_changed.emit(self.visible)
@@ -481,7 +495,7 @@ class Widget(ABC):
     def collapsed(self, collapsed):
         """Collapse the widget. Does not take layout space."""
         old_state = self.collapsed
-        self._collapsed = Validator.ensure(collapsed, bool)
+        self._collapsed = Validator.ensure(collapsed, bool, attr_name='Widget.collapsed')
 
         if old_state != self.collapsed:
             self.collapsed_changed.emit(self.collapsed)
@@ -493,6 +507,7 @@ class Widget(ABC):
     @enabled.setter
     def enabled(self, enabled: bool):
         """Enables/Disables the widget."""
+        enabled = Validator.ensure(enabled, bool, attr_name='Widget.enabled')
         if enabled is False and self._ALLOW_DISABLED is False:
             raise TreezeRuntimeError(f'{self.__class__.__name__} widgets cannot be disabled')
 
@@ -508,7 +523,7 @@ class Widget(ABC):
 
     @color.setter
     def color(self, color: ColorValue):
-        self._color = Validator.ensure(color, ColorValue, None)
+        self._color = Validator.ensure(color, ColorValue, None, attr_name='Widget.color')
 
     @property
     def background_color(self) -> ColorValue:
@@ -516,7 +531,7 @@ class Widget(ABC):
 
     @background_color.setter
     def background_color(self, background_color: ColorValue):
-        self._background_color = Validator.ensure(background_color, ColorValue, None)
+        self._background_color = Validator.ensure(background_color, ColorValue, None, attr_name='Widget.background_color')
 
     @property
     def border(self) -> str | None:
@@ -526,8 +541,8 @@ class Widget(ABC):
     def border(self, border: str | None):
         if isinstance(border, str):
             if not len(border.split(' ')) == 3:
-                raise TreezeValueError('Border must match this format: "<width> <style> <color>"')
-        self._border = Validator.ensure(border, str, None)
+                raise TreezeValueError('Widget.border: must match "<width> <style> <color>".')
+        self._border = Validator.ensure(border, str, None, attr_name='Widget.border')
 
     @property
     def border_width(self) -> int | str | None:
@@ -535,7 +550,7 @@ class Widget(ABC):
 
     @border_width.setter
     def border_width(self, border_width: int | str | None):
-        self._border_width = Validator.ensure(border_width, int, str, None)
+        self._border_width = Validator.ensure(border_width, int, str, None, attr_name='Widget.border_width')
 
     @property
     def border_style(self) -> str | None:
@@ -543,7 +558,7 @@ class Widget(ABC):
 
     @border_style.setter
     def border_style(self, border_style: str | None):
-        self._border_style = Validator.ensure(border_style, str, None)
+        self._border_style = Validator.ensure(border_style, str, None, attr_name='Widget.border_style')
 
     @property
     def border_color(self) -> ColorValue | None:
@@ -551,7 +566,7 @@ class Widget(ABC):
 
     @border_color.setter
     def border_color(self, border_color: ColorValue | None):
-        self._border_color = Validator.ensure(border_color, ColorValue, None)
+        self._border_color = Validator.ensure(border_color, ColorValue, None, attr_name='Widget.border_color')
 
     @property
     def border_radius(self) -> int | str | None:
@@ -559,15 +574,23 @@ class Widget(ABC):
 
     @border_radius.setter
     def border_radius(self, border_radius: int | str | None):
-        self._border_radius = Validator.ensure(border_radius, int, str, None)
+        self._border_radius = Validator.ensure(border_radius, int, str, None, attr_name='Widget.border_radius')
 
     @property
-    def opacity(self) -> float | str | None:
+    def opacity(self) -> int | float | str | None:
         return self._opacity
 
     @opacity.setter
-    def opacity(self, opacity: float | str | None):
-        self._opacity = Validator.ensure(opacity, float, str, None)
+    def opacity(self, opacity: int | float | str | None):
+        Validator.ensure(opacity, int, float, str, None, attr_name='Widget.opacity')
+        if isinstance(opacity, (int, float)):
+            if isinstance(opacity, bool):
+                raise TreezeTypeError('Widget.opacity: cannot be a boolean.')
+            if isinstance(opacity, float) and not isfinite(opacity):
+                raise TreezeValueError('Widget.opacity: must be finite.')
+            if not 0 <= opacity <= 1:
+                raise TreezeValueError('Widget.opacity: must be between 0 and 1.')
+        self._opacity = opacity
 
         
     # ==========================================================================
@@ -580,7 +603,7 @@ class Widget(ABC):
             raise TreezeRuntimeError(
                 'Cannot execute a client action without an active session.'
             )
-        self._session._queue_client_action(Validator.ensure(action, ClientAction))
+        self._session._queue_client_action(Validator.ensure(action, ClientAction, attr_name='Widget.execute(action=...)'))
 
     def unparent(self) -> None:
         """Remove this widget from its parent"""
@@ -596,10 +619,10 @@ class Widget(ABC):
 
     def add_class(self, class_name: str) -> None:
         """Adds a css class to the widget"""
-        class_name = Validator.ensure(class_name, str)
+        class_name = Validator.ensure(class_name, str, attr_name='Widget.add_class(class_name=...)')
 
         if class_name.startswith('tz-'):
-            raise TreezeValueError('class cannot start with "tz-". The "tz-" prefix is reserved by Treeze.')
+            raise TreezeValueError('Widget.add_class(class_name=...): cannot start with "tz-"; the prefix is reserved by Treeze.')
 
         if class_name not in self._extra_classes:
             self._extra_classes.append(class_name)
@@ -608,10 +631,10 @@ class Widget(ABC):
 
     def remove_class(self, class_name: str) -> None:
         """Removes a css class from the widget"""
-        class_name = Validator.ensure(class_name, str)
+        class_name = Validator.ensure(class_name, str, attr_name='Widget.remove_class(class_name=...)')
         
         if class_name.startswith('tz-'):
-            raise TreezeValueError('class cannot start with "tz-". The "tz-" prefixed classes cannot be modified.')
+            raise TreezeValueError('Widget.remove_class(class_name=...): cannot modify classes starting with "tz-".')
 
         if class_name in self._extra_classes:
             self._extra_classes.remove(class_name)
@@ -622,14 +645,14 @@ class Widget(ABC):
     #  Private
     # ==========================================================================
 
-    def _set_parent(self, widget: Container | None = None):
+    def _set_parent(self, widget: Container | Window | None = None):
         """
         Sets a new parent on the widget.
         Exposed for container to call when capturing ownership
         """
         old_parent = self._parent
 
-        widget = Validator.ensure(widget, Widget, None)
+        widget = Validator.ensure(widget, Widget, None, attr_name='Widget._set_parent(widget=...)')
         self._parent = widget
         self._container_orientation = widget._ORIENTATION if widget else None
 
@@ -806,20 +829,20 @@ class Widget(ABC):
         # Size policies
         styles.update(self._styles_size_policy())
 
-        if self.fixed_width:
+        if self.fixed_width is not None:
             styles['width'] = f'{self.fixed_width}px'
         else:
-            if self.minimum_width:
+            if self.minimum_width is not None:
                 styles['min-width'] = f'{self.minimum_width}px'
-            if self.maximum_width:
+            if self.maximum_width is not None:
                 styles['max-width'] = f'{self.maximum_width}px'
 
-        if self.fixed_height:
+        if self.fixed_height is not None:
             styles['height'] = f'{self.fixed_height}px'
         else:
-            if self.minimum_height:
+            if self.minimum_height is not None:
                 styles['min-height'] = f'{self.minimum_height}px'
-            if self.maximum_height:
+            if self.maximum_height is not None:
                 styles['max-height'] = f'{self.maximum_height}px'
 
         if self.margin is not None:
@@ -942,18 +965,14 @@ class Widget(ABC):
 
         if style_type is None:
             if style is not None:
-                raise TreezeTypeError(f'{type(self).__name__} does not support styles.')
+                raise TreezeTypeError(f'Widget.style: {type(self).__name__} does not support styles.')
 
             return None
 
         if style is None:
             return default_style
 
-        if not isinstance(style, style_type):
-            raise TreezeTypeError(
-                f'{type(self).__name__}.style must be an instance of '
-                f'{style_type.__name__}, not {type(style).__name__}.'
-            )
+        Validator.ensure(style, style_type, attr_name='Widget.style')
 
         return style
 

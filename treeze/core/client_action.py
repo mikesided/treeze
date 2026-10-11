@@ -17,9 +17,9 @@ class ClientAction:
     type: str = field(kw_only=True)
 
     def __post_init__(self) -> None:
-        Validator.ensure(self.type, str)
+        Validator.ensure(self.type, str, attr_name='ClientAction.type')
         if not self.type.strip():
-            raise TreezeValueError('ClientAction.type cannot be empty.')
+            raise TreezeValueError('ClientAction.type: cannot be empty.')
 
     def serialize(self) -> dict:
         """Serialize all dataclass fields, including inherited and nested fields."""
