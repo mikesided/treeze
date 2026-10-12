@@ -266,6 +266,7 @@ class PatchOp(StrEnum):
     REPLACE_CHILDREN = 'replace_children'
     APPEND_CHILD = 'append_child'
     INSERT_CHILD = 'insert_child'
+    MOVE_CHILD = 'move_child'
 
     SET_ATTRIBUTE = 'set_attribute'
     SET_PROPERTY = 'set_property'

@@ -15,6 +15,7 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         ['replace_node', applyReplaceNodePatch],
         ['replace_children', applyReplaceChildrenPatch],
         ['insert_child', applyInsertChildPatch],
+        ['move_child', applyMoveChildPatch],
         ['remove_node', applyRemoveNodePatch],
     ]);
 
@@ -137,9 +138,11 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
             return;
         }
 
-        element.replaceWith(
-            createElement(patch.data.node),
-        );
+        const replacement = createElement(patch.data.node);
+        if (patch.data.preserve_children) {
+            replacement.append(...element.children);
+        }
+        element.replaceWith(replacement);
     }
 
     function applyReplaceChildrenPatch(patch) {
@@ -170,6 +173,22 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         element.insertBefore(child, referenceElement);
     }
 
+
+    function applyMoveChildPatch(patch) {
+        const element = findElementByWidgetId(patch.target_id);
+        const parent = findElementByWidgetId(patch.data.parent_id);
+        if (!element || !parent) {
+            console.warn('Move target or parent not found:', patch);
+            return;
+        }
+        const siblings = [...parent.children].filter((child) => child !== element);
+        const focused = document.activeElement;
+        const restoreFocus = focused && element.contains(focused);
+        parent.insertBefore(element, siblings[patch.data.index] ?? null);
+        if (restoreFocus && document.activeElement !== focused) {
+            focused.focus({ preventScroll: true });
+        }
+    }
 
     function applyRemoveNodePatch(patch) {
         const element = findElementByWidgetId(patch.target_id);

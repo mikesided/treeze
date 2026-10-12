@@ -16,6 +16,87 @@ Patch = dict[str, Any]
 # ______________________________________________________________________________________________________________________
 
 
+def diff_subtrees(old: list[SerializedNode], new: list[SerializedNode]) -> list[Patch]:
+    """Compare affected subtree snapshots together to recognize transferred IDs.
+
+    The roots must be unchanged ownership boundaries, with no overlapping
+    subtrees in either snapshot. The synthetic parent never reaches the client.
+    """
+    boundary_id = '__patch_forest__'
+
+    def index_tree(roots):
+        nodes = {boundary_id: {'id': boundary_id, 'tag': 'div', 'children': roots}}
+        parents = {boundary_id: None}
+
+        def visit(node, parent_id):
+            nodes[node['id']] = node
+            parents[node['id']] = parent_id
+            for child in node.get('children', []):
+                visit(child, node['id'])
+
+        for root in roots:
+            visit(root, boundary_id)
+        return nodes, parents
+
+    old_nodes, current_parents = index_tree(old)
+    new_nodes, new_parents = index_tree(new)
+    positions = {
+        child['id']: index
+        for node in new_nodes.values()
+        for index, child in enumerate(node.get('children', []))
+    }
+    children = {
+        node_id: [child['id'] for child in node.get('children', [])]
+        for node_id, node in old_nodes.items()
+    }
+    patches: list[Patch] = []
+    updates: list[Patch] = []
+
+    # Visit parents before children so new destinations exist before a move.
+    for node_id, node in new_nodes.items():
+        if node_id == boundary_id:
+            continue
+        shallow = {**node, 'children': []}
+        previous = old_nodes.get(node_id)
+        if previous is None:
+            parent_id = new_parents[node_id]
+            patches.append({
+                'op': PatchOp.APPEND_CHILD, 'target_id': parent_id,
+                'data': {'child': shallow},
+            })
+            children[node_id] = []
+            children[parent_id].append(node_id)
+            current_parents[node_id] = parent_id
+        elif previous.get('tag') != node.get('tag') or previous.get('events', {}) != node.get('events', {}):
+            patches.append({
+                'op': PatchOp.REPLACE_NODE, 'target_id': node_id,
+                'data': {'node': shallow, 'preserve_children': True},
+            })
+        else:
+            updates.extend(diff_nodes({**previous, 'children': []}, shallow))
+
+        parent_id = new_parents[node_id]
+        if parent_id == boundary_id:
+            continue
+        position = positions[node_id]
+        siblings = children[parent_id]
+        if current_parents[node_id] != parent_id or siblings.index(node_id) != position:
+            patches.append({
+                'op': PatchOp.MOVE_CHILD, 'target_id': node_id,
+                'data': {'parent_id': parent_id, 'index': position},
+            })
+            children[current_parents[node_id]].remove(node_id)
+            siblings.insert(position, node_id)
+            current_parents[node_id] = parent_id
+
+    # Save surviving descendants before removing their former parent nodes.
+    removed = old_nodes.keys() - new_nodes.keys()
+    for node_id in old_nodes:
+        if node_id in removed and current_parents[node_id] not in removed:
+            patches.append({'op': PatchOp.REMOVE_NODE, 'target_id': node_id, 'data': {}})
+    return patches + updates
+
+
 def diff_nodes(old: SerializedNode, new: SerializedNode) -> list[Patch]:
     patches: list[Patch] = []
     _diff_node(old, new, patches)

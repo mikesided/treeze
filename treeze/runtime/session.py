@@ -119,10 +119,17 @@ class Session:
             raise TreezeRuntimeError('Cannot build a closed session.')
 
         with use_session(self), use_id_scope(self.id_scope):
-            node_tree = self.app._build_window(self.window)
-            self._index_widgets()
-            self._patch_engine.capture_tree(node_tree)
-            self._clear_dirty_state()
+            processed_widgets = self._dirty_widgets
+            self._dirty_widgets = set()
+            try:
+                node_tree = self.app._build_window(self.window)
+                self._index_widgets()
+                self._patch_engine.capture_tree(node_tree)
+            except BaseException:
+                self._dirty_widgets.update(processed_widgets)
+                raise
+            # A full initial render also covers widgets built outside this session.
+            self._clear_dirty_state(processed_widgets | set(self._widgets.values()))
 
         return node_tree
 
@@ -159,14 +166,16 @@ class Session:
 
                     self._index_widgets()
 
-                    patches = self._patch_engine.create_patches_for_dirty_widgets(
-                        self._dirty_widgets,
-                    )
-
-                    for widget in self._dirty_widgets:
-                        widget._mark_clean()
-
-                    self._clear_dirty_state()
+                    processed_widgets = self._dirty_widgets
+                    self._dirty_widgets = set()
+                    try:
+                        patches = self._patch_engine.create_patches_for_dirty_widgets(
+                            processed_widgets,
+                        )
+                    except BaseException:
+                        self._dirty_widgets.update(processed_widgets)
+                        raise
+                    self._clear_dirty_state(processed_widgets)
 
                     return patches
 
@@ -250,8 +259,8 @@ class Session:
 
         self._dirty_widgets.add(widget)
 
-    def _clear_dirty_state(self) -> None:
-        for widget in self._widgets.values():
-            widget._mark_clean()
-
-        self._dirty_widgets.clear()
+    def _clear_dirty_state(self, processed_widgets: set[Widget]) -> None:
+        """Clean the completed batch without discarding changes made during rendering."""
+        for widget in processed_widgets:
+            if widget not in self._dirty_widgets:
+                widget._mark_clean()
