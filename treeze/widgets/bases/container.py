@@ -55,6 +55,15 @@ class Container(Widget, ABC):
         widget = Validator.ensure(widget, Widget, attr_name='Container._add_widget(widget=...)')
         Validator.ensure(position, InsertPosition, attr_name='Container._add_widget(position=...)')
 
+        # Check before detaching: a container cannot own itself or an ancestor.
+        ancestor = self
+        while ancestor is not None:
+            if ancestor is widget:
+                raise TreezeValueError(
+                    'Container._add_widget(widget=...): cannot add a widget to itself or one of its descendants.'
+                )
+            ancestor = ancestor.parent
+
         # Validate if the widget already has a parent, if so remove it
         if widget.parent:
             widget.parent._remove_widget(widget)
