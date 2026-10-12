@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import replace
 from enum import StrEnum
 from typing import Any, ClassVar, TYPE_CHECKING
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from itertools import count
 from math import isfinite
 
@@ -37,7 +37,16 @@ ColorValue = str | Color | ConeGradient | LinearGradient | RadialGradient
 
 _widget_id_counter = count(1)
 
-class Widget(ABC):
+class _WidgetMeta(ABCMeta):
+    def __call__(cls, *args: Any, **kwargs: Any) -> Widget:
+        widget = super().__call__(*args, **kwargs)
+        parent = widget.__dict__.pop('_pending_parent', None)
+        if parent is not None and parent._CHILDHOST is True:
+            parent._add_widget(widget)
+        return widget
+
+
+class Widget(ABC, metaclass=_WidgetMeta):
     """
     Base class for Widget.
     
@@ -251,11 +260,8 @@ class Widget(ABC):
         for klass in classes or ():
             self.add_class(klass)
 
-        # Set parent
-        parent = Validator.ensure(parent, Widget, None, attr_name='Widget(parent=...)')
-        if parent is not None and parent._CHILDHOST is True:
-            # Ugly - no direct link to a container, but will do as long as only containers can be child hosts
-            parent._add_widget(self)
+        # Attach parent only after the most-derived constructor has finished.
+        self._pending_parent = Validator.ensure(parent, Widget, None, attr_name='Widget(parent=...)')
 
         self._suspend_dirty_tracking = False
         self._mark_dirty()
