@@ -88,23 +88,15 @@ def create_asgi_app(app: App) -> FastAPI:
 
             while True:
                 client_message = await ws.receive_json()
-
                 try:
-                    patches = session._handle_message(client_message)
-
+                    patches = await session._handle_message(client_message)
                     session._publish_update(patches)
-
                 except TreezeError as error:
                     session._pending_actions.clear()
                     print(traceback.format_exc())
-
-                    await ws.send_json(
-                        ServerDialogMessage(
-                            level='error',
-                            title=type(error).__name__,
-                            message=str(error),
-                        ).to_protocol_message().to_dict()
-                    )
+                    await ws.send_json(ServerDialogMessage(
+                        level='error', title=type(error).__name__, message=str(error),
+                    ).to_protocol_message().to_dict())
 
         except WebSocketDisconnect:
             return

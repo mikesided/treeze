@@ -12,7 +12,6 @@ from typing import Any, TYPE_CHECKING
 import uuid
 
 from .patch_engine import PatchEngine
-from .patches import diff_nodes
 from .protocol import ClientSignalMessage, ServerActionsMessage, ServerPatchesMessage
 
 from ..core.exceptions import TreezeRuntimeError
@@ -73,6 +72,7 @@ class Session:
         self._outgoing: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
         self._pending_actions: list[dict[str, Any]] = []
         self._handling_message = False
+        self._message_lock = asyncio.Lock()
 
         self.id_scope = create_id_scope()
 
@@ -133,58 +133,42 @@ class Session:
 
         return node_tree
 
-    def _handle_message(self, message: dict[str, Any]) -> list[dict[str, Any]]:
-        """
-        Handle a client message for this session.
-
-        For now, this works by:
-        - serializing the current node tree
-        - emitting the signal
-        - rebuilding the new node tree
-        - diffing old vs new
-        - returning patches
-        """
-        if self.closed:
-            raise TreezeRuntimeError('Cannot handle messages on a closed session.')
-
+    async def _handle_message(self, message: dict[str, Any]) -> list[dict[str, Any]]:
+        """Await a client's callbacks in session context and return its UI patches."""
         message = Validator.ensure(message, dict, attr_name='Session._handle_message(message=...)')
         message_type = Validator.ensure(message.get('type'), str, attr_name='client.signal.type')
         payload = Validator.ensure(message.get('payload'), dict, attr_name='client.signal.payload')
 
-        with use_session(self), use_id_scope(self.id_scope):
-            match message_type:
-                case 'client.signal':
-                    signal_message = ClientSignalMessage.from_payload(payload)
-                    self._handling_message = True
-                    try:
-                        self._handle_signal_message(signal_message)
-                    except BaseException:
-                        self._pending_actions.clear()
-                        raise
-                    finally:
-                        self._handling_message = False
+        # One session is sequential; other sessions have their own lock.
+        async with self._message_lock:
+            if self.closed:
+                raise TreezeRuntimeError('Cannot handle messages on a closed session.')
+            with use_session(self), use_id_scope(self.id_scope):
+                if message_type != 'client.signal':
+                    raise TreezeRuntimeError(f'Unsupported client message type: {message_type!r}.')
+                signal_message = ClientSignalMessage.from_payload(payload)
+                self._handling_message = True
+                try:
+                    await self._handle_signal_message(signal_message)
+                except BaseException:
+                    self._pending_actions.clear()
+                    raise
+                finally:
+                    self._handling_message = False
 
-                    self._index_widgets()
+                self._index_widgets()
+                processed_widgets = self._dirty_widgets
+                self._dirty_widgets = set()
+                try:
+                    patches = self._patch_engine.create_patches_for_dirty_widgets(processed_widgets)
+                except BaseException:
+                    self._dirty_widgets.update(processed_widgets)
+                    self._pending_actions.clear()
+                    raise
+                self._clear_dirty_state(processed_widgets)
+                return patches
 
-                    processed_widgets = self._dirty_widgets
-                    self._dirty_widgets = set()
-                    try:
-                        patches = self._patch_engine.create_patches_for_dirty_widgets(
-                            processed_widgets,
-                        )
-                    except BaseException:
-                        self._dirty_widgets.update(processed_widgets)
-                        raise
-                    self._clear_dirty_state(processed_widgets)
-
-                    return patches
-
-                case _:
-                    raise TreezeRuntimeError(
-                        f'Unsupported client message type: {message_type!r}.'
-                    )
-            
-    def _handle_signal_message(self, message: ClientSignalMessage) -> None:
+    async def _handle_signal_message(self, message: ClientSignalMessage) -> None:
         widget = self._widgets.get(message.widget_id)
 
         if widget is None:
@@ -209,7 +193,7 @@ class Session:
             )
 
         # Browser-bound actions already ran in the browser event handler.
-        widget._get_signal(message.signal)._emit(
+        await widget._get_signal(message.signal)._emit_async(
             message.args,
             message.kwargs or {},
             execute_actions=False,
@@ -244,10 +228,9 @@ class Session:
             self._widgets[widget.id] = widget
 
     def _close(self) -> None:
-        """Close the session and release runtime references."""
+        """Close the session and release pending outgoing updates."""
         if self.closed:
             return
-
         self._closed = True
         self._pending_actions.clear()
         while not self._outgoing.empty():

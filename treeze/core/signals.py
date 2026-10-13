@@ -216,6 +216,10 @@ class BoundSignal:
         """Trigger Python callbacks and queue bound actions for the browser."""
         self._emit(args, kwargs, execute_actions=True)
 
+    async def emit_async(self, *args: Any, **kwargs: Any) -> None:
+        """Await callbacks in connection order, then queue bound browser actions."""
+        await self._emit_async(args, kwargs, execute_actions=True)
+
     def _emit(self, args: tuple[Any, ...], kwargs: dict[str, Any], *, execute_actions: bool) -> None:
         self._validate_emit_arguments(args, kwargs)
         actions = tuple(self._actions)
@@ -223,7 +227,14 @@ class BoundSignal:
         for callback, _ in tuple(self._callbacks):
             self._validate_callback_signature(callback, args, kwargs)
 
-            callback(*args, **kwargs)
+            result = callback(*args, **kwargs)
+            if inspect.isawaitable(result):
+                if inspect.iscoroutine(result):
+                    result.close()
+                raise TreezeRuntimeError(
+                    f'Signal {self._name!r} returned an awaitable during emit(). '
+                    'Use await signal.emit_async(); setter-driven signals require synchronous callbacks.'
+                )
 
         if execute_actions:
             for action in actions:
@@ -231,6 +242,24 @@ class BoundSignal:
 
     def has_connections(self) -> bool:
         return bool(self._callbacks or self._actions)
+
+    async def _emit_async(
+        self, args: tuple[Any, ...], kwargs: dict[str, Any], *, execute_actions: bool,
+    ) -> None:
+        """Run callbacks in connection order, awaiting each awaitable result."""
+        self._validate_emit_arguments(args, kwargs)
+        actions = tuple(self._actions)
+        callbacks = tuple(self._callbacks)
+
+        for callback, _ in callbacks:
+            self._validate_callback_signature(callback, args, kwargs)
+            result = callback(*args, **kwargs)
+            if inspect.isawaitable(result):
+                await result
+
+        if execute_actions:
+            for action in actions:
+                self._owner.execute(action)
     
     def _validate_emit_arguments(
             self,
