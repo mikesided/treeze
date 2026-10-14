@@ -12,6 +12,7 @@ from pathlib import Path
 from functools import partial
 from textwrap import dedent
 import random
+import asyncio
 
 # Make sure treeze is in the environment when running this file directly
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -26,6 +27,7 @@ from treeze.core.enums import (
     LayoutAlignment,
     LayoutStyle,
     LineStyle,
+    ImageStyle,
     SizePolicy,
     TreezeTheme,
     Variant,
@@ -61,7 +63,7 @@ class ShowcaseWindow(Window):
         self.btn_profile = Button(text='Profile', style=ButtonStyle.SOFT, variant=Variant.INFO, fixed_width=150)
 
         # Navigation Widgets
-        self.btn_home = Button('Home', horizontal_size_policy=SizePolicy.EXPANDING)
+        self.btn_home = Button('Home', fixed_height=30, icon='/resources/treeze.svg')
         self.btn_layouts = Button('Layouts', horizontal_size_policy=SizePolicy.EXPANDING)
         self.btn_patches = Button('Patches', horizontal_size_policy=SizePolicy.EXPANDING)
         self.btn_signals = Button('Signals', horizontal_size_policy=SizePolicy.EXPANDING)
@@ -80,14 +82,9 @@ class ShowcaseWindow(Window):
         self._build_body(parent=self.layout)
         self._build_footer(parent=self.layout)
 
-        # Connections
-        #for widget in self.layout_sidebar.children:
-        #    if isinstance(widget, Button):
-        #        widget.horizontal_size_policy = SizePolicy.EXPANDING
-        #        widget.clicked.connect(partial(self._on_nav_button_clicked, widget))
-
         # Init
-        self.btn_home.clicked.emit()
+        self._show_page(self.btn_home)
+
 
     # ==================================================================================================================
     #  Constructors
@@ -156,6 +153,7 @@ class ShowcaseWindow(Window):
                 widget.clicked.connect(partial(self._on_nav_button_clicked, widget, LabelWidget))
 
         return self.layout_sidebar
+
     
     def _build_footer(self, parent=None):        
         self.layout_footer = HLayout(
@@ -175,7 +173,13 @@ class ShowcaseWindow(Window):
     #   Callbacks
     # ==================================================================================================================
 
-    def _on_nav_button_clicked(self, button, widget_class):
+    async def _on_nav_button_clicked(self, button, widget_class):
+        await asyncio.sleep(3)
+        self._show_page(button)
+        if self.btn_home.variant != Variant.PRIMARY:
+            await self.btn_home.clicked.emit()
+
+    def _show_page(self, button):
         # Reset button states
         for child in self.layout_sidebar.children:
             if isinstance(child, Button):
@@ -208,15 +212,15 @@ class HomeWidget(ContentWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        #self.fixed_height = 150
         self.horizontal_alignment = LayoutAlignment.CENTER
 
         self.add_widget(Label('Welcome to treeze\'s showcase page!', style=LabelStyle.HEADING_1))
 
-        card = Card(parent=self)
+        image = Image('/resources/treeze.svg', style=ImageStyle.FILL)
 
-        card.header.add_widget(Label('HELLO HEADER'))
-        card.body.add_widget(Label('HELLO BODY'))
-        card.footer.add_widget(Label('HELLO FOOTER'))
+        self.add_widget(image)
+
 
 
 class LayoutsWidget(ContentWidget):
@@ -267,6 +271,7 @@ class PatchesWidget(ContentWidget):
         self.layout_example_header = HLayout(spacing=5, parent=self)
         self.btn_add = Button('Add new widget', parent=self.layout_example_header)
         self.btn_transfer = Button('Move the first widget', parent=self.layout_example_header)
+        self.btn_transfer2 = Button('Move the first widget2', parent=self.layout_example_header)
         self.btn_remove = Button('Remove a random widget', parent=self.layout_example_header)
         self.btn_rename = Button('Transform a random widget', parent=self.layout_example_header)
         self.btn_clear = Button('Clear all widgets', parent=self.layout_example_header)
@@ -281,6 +286,7 @@ class PatchesWidget(ContentWidget):
         self.btn_remove.clicked.connect(self._on_btn_remove_clicked)
         self.btn_rename.clicked.connect(self._on_btn_rename_clicked)
         self.btn_transfer.clicked.connect(self._on_btn_transfer_clicked)
+        self.btn_transfer2.clicked.connect(self._on_btn_transfer2_clicked)
 
     def get_random_widget(self):        
         count = len(self.layout_left.children) + len(self.layout_right.children)
@@ -327,6 +333,10 @@ class PatchesWidget(ContentWidget):
             widget = self.layout_left.children[0]
             self.layout_right.add_widget(widget)
 
+    def _on_btn_transfer2_clicked(self):
+        if self.layout_right.children:
+            widget = self.layout_right.children[0]
+            self.layout_left.add_widget(widget)
 
 class SignalsWidget(ContentWidget):
 
@@ -406,7 +416,7 @@ class VariantsWidget(ContentWidget):
         self.add_widget(Label('Info', variant=Variant.MUTED, style=LabelStyle.HEADING_2, padding=(25, 5, 10, 5)))
         info_text = dedent("""
             Variants offer a way to modify the look of your widgets. They mainly affect color, based on the theme.
-            By default, most widget ssupport all variants, but some widgets may not support all of them, or they may not be implemented.
+            Each widget supports the variants defined in its CSS. All widgets support the default variant.
 
             Note that the theme is fully editable through the app itself, therefore all variants share the same look when using variants.
         """).strip()
@@ -415,7 +425,7 @@ class VariantsWidget(ContentWidget):
         # Examples
         self.add_widget(Label('Examples', variant=Variant.MUTED, style=LabelStyle.HEADING_2, padding=(25, 5, 10, 5)))
         self.add_widget(Label('As an example, heres a list of all the variants for a button, using the default style'))
-        for variant in Variant:
+        for variant in (Variant.DEFAULT, *Button._SUPPORTED_VARIANTS):
             button = Button(text=variant.name, variant=variant, parent=self)
 
 
