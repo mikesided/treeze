@@ -959,10 +959,16 @@ class Widget(ABC, metaclass=_WidgetMeta):
 
         for browser_event, binding in tuple(self._node.events.items()):
             if binding.signal is not None:
-                actions = self._get_signal(binding.signal).actions
-                self._node.events[browser_event] = replace(
-                    binding, actions=(*binding.actions, *actions),
+                signal = self._get_signal(binding.signal)
+                binding = replace(
+                    binding,
+                    signal=binding.signal if signal.has_callbacks() else None,
+                    actions=(*binding.actions, *signal.actions),
                 )
+                if binding.signal is None and not binding.actions:
+                    del self._node.events[browser_event]
+                else:
+                    self._node.events[browser_event] = binding
 
         return self._node
 

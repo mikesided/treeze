@@ -161,6 +161,9 @@ class BoundSignal:
     @property
     def actions(self) -> tuple[ClientAction, ...]:
         return tuple(self._actions)
+
+    def has_callbacks(self) -> bool:
+        return bool(self._callbacks)
         
     def disconnect(self, callback: Callable[..., Any] | None = None) -> None:
         """Disconnect a public callback, or all public callbacks if None."""
@@ -183,6 +186,8 @@ class BoundSignal:
         self._validate_callback_accepts_declared_args(callback)
 
         self._callbacks.append((callback, internal))
+        if len(self._callbacks) == 1:
+            self._owner._mark_dirty()
 
 
     def _internal_disconnect(self, callback: Callable[..., Any] | None = None) -> None:
@@ -197,14 +202,19 @@ class BoundSignal:
     ) -> None:
         """Remove connections only from the requested public or internal group."""
         if callback is None:
+            had_callbacks = self.has_callbacks()
             self._callbacks[:] = [
                 connection for connection in self._callbacks if connection[1] != internal
             ]
+            if had_callbacks and not self.has_callbacks():
+                self._owner._mark_dirty()
             return
 
         for index, (connected, is_internal) in enumerate(self._callbacks):
             if is_internal == internal and connected == callback:
                 del self._callbacks[index]
+                if not self.has_callbacks():
+                    self._owner._mark_dirty()
                 return
 
         connection_type = 'internally' if internal else 'publicly'
