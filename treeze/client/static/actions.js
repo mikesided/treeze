@@ -1,6 +1,7 @@
 const actionHandlers = new Map([
     ['open_url', executeOpenUrl],
     ['reconnect', executeReconnect],
+    ['emit_signal', executeEmitSignal],
 ]);
 
 
@@ -41,5 +42,16 @@ function executeReconnect(action) {
         detail: {
             query_params: action.query_params ?? {},
         },
+    }));
+}
+
+
+function executeEmitSignal(action) {
+    const element = document.querySelector(`[data-tz-id="${action.widget_id}"]`);
+    if (!element || element.closest(':disabled, .tz-disabled')) {
+        return;
+    }
+    element.dispatchEvent(new CustomEvent(action.browser_event, {
+        detail: { args: action.args },
     }));
 }

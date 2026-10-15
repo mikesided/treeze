@@ -4,6 +4,7 @@ import { createPatchHandler } from './patches.js';
 const applyPatch = createPatchHandler({ createElement, applyAttribute, applyStyle, bindEvents });
 const eventControllers = new WeakMap();
 const editingStates = new WeakMap();
+const activeEvents = new WeakMap();
 
 const socketUrl = new URL('/ws', window.location.href);
 socketUrl.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -284,39 +285,51 @@ function bindEvents(element, events, widgetId) {
 
     for (const [browserEvent, eventConfig] of Object.entries(events)) {
         element.addEventListener(browserEvent, (event) => {
-            if (element.matches(':disabled')) {
+            if (element.closest(':disabled, .tz-disabled')) {
                 return;
             }
-            const signalConfig = normalizeSignalConfig(eventConfig);
-            const sync = {};
-            for (const [targetId, property] of Object.entries(signalConfig.sync)) {
-                const target = document.querySelector(`[data-tz-id="${targetId}"]`);
-                if (!target) {
-                    return;
+            const active = activeEvents.get(element) ?? new Set();
+            if (active.has(browserEvent)) {
+                return;
+            }
+            activeEvents.set(element, active);
+            active.add(browserEvent);
+            try {
+                const signalConfig = normalizeSignalConfig(eventConfig);
+                const sync = {};
+                for (const [targetId, property] of Object.entries(signalConfig.sync)) {
+                    const target = document.querySelector(`[data-tz-id="${targetId}"]`);
+                    if (!target) {
+                        return;
+                    }
+                    sync[targetId] = target[property];
                 }
-                sync[targetId] = target[property];
-            }
-            executeActions(signalConfig.actions);
-            if (!signalConfig.signal && !Object.keys(signalConfig.sync).length) {
-                return;
-            }
-            const eventArgs = collectEventArgs(
-                element,
-                event,
-                signalConfig.data,
-            );
+                if (signalConfig.signal || Object.keys(signalConfig.sync).length) {
+                    const eventArgs = collectEventArgs(
+                        element,
+                        event,
+                        signalConfig.data,
+                    );
 
-            sendSignal(
-                widgetId,
-                signalConfig.signal,
-                [
-                    ...signalConfig.args,
-                    ...eventArgs,
-                ],
-                signalConfig.kwargs,
-                browserEvent,
-                sync,
-            );
+                    sendSignal(
+                        widgetId,
+                        signalConfig.signal,
+                        event.detail?.args?.length ? event.detail.args : [
+                            ...signalConfig.args,
+                            ...eventArgs,
+                        ],
+                        signalConfig.kwargs,
+                        browserEvent,
+                        sync,
+                    );
+                }
+                executeActions(signalConfig.actions);
+            } finally {
+                active.delete(browserEvent);
+                if (!active.size) {
+                    activeEvents.delete(element);
+                }
+            }
         }, options);
     }
 }
