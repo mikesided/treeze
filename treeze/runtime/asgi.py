@@ -11,9 +11,10 @@ from typing import TYPE_CHECKING
 import traceback
 import asyncio
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 from .protocol import (
     ServerDialogMessage,
@@ -25,6 +26,7 @@ from ..client.index import render_index
 from ..core.exceptions import TreezeError
 
 from .connection import ConnectionContext
+from .security import is_same_origin_websocket
 
 if TYPE_CHECKING:
     from .session import Session
@@ -35,6 +37,9 @@ if TYPE_CHECKING:
 
 CLIENT_DIR = Path(__file__).parents[1] / 'client'
 
+class CookieOperationRequest(BaseModel):
+    session_id: str
+    operation_id: str
 
 def create_asgi_app(app: App) -> FastAPI:
     asgi_app = FastAPI()
@@ -73,11 +78,16 @@ def create_asgi_app(app: App) -> FastAPI:
         accepted = False
 
         try:
+            if not is_same_origin_websocket(ws.headers):
+                await ws.close(code=1008)
+                return
+            
             connection = ConnectionContext(ws)
             if app.session_initializer is not None:
                 await app.session_initializer(connection)
 
-            session = app._create_session(state=connection.state)
+            origin = ws.headers['origin']
+            session = app._create_session(state=connection.state, origin=origin)
         
             node_tree = session._build()
 
@@ -147,5 +157,32 @@ def create_asgi_app(app: App) -> FastAPI:
                 await asyncio.gather(sender, return_exceptions=True)
             if session is not None:
                 app._close_session(session)
+
+    @asgi_app.post('/_treeze/session/cookie', include_in_schema=False)
+    async def apply_cookie(payload: CookieOperationRequest, request: Request) -> Response:
+        """
+        HTTP endpoint to apply cookies
+
+        NOTE: For multiple server workers, the HTTP Request must reach the same worker that owns the websocket
+        """
+        # Reject cross-origin requests
+        if (not session._origin or request.headers.get('origin') != session._origin):
+            raise HTTPException(status_code=403, detail='Invalid request origin.')
+
+        fetch_site = request.headers.get('sec-fetch-site')
+        if fetch_site is not None and fetch_site != 'same-origin':
+            raise HTTPException(status_code=403, detail='Cross-origin request rejected.')
+
+        session = app._sessions._get_session(payload.session_id)
+        if session is None or session.closed:
+            raise HTTPException(status_code=404, detail='Unknown session.')
+
+        header = session._consume_cookie_operation(payload.operation_id)
+        if header is None:
+            raise HTTPException(status_code=404, detail='Invalid or expired cookie operation.')
+
+        response = Response(status_code=204, headers={'Cache-Control': 'no-store'})
+        response.raw_headers.append((b'set-cookie', header))
+        return response
 
     return asgi_app

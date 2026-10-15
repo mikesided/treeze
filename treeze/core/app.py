@@ -48,6 +48,7 @@ class App(Server):
         self._resources: dict[str] = {'resources': 'resources'}
         self._sessions: SessionManager = SessionManager(self)
         self._session_initializer: (Callable[[ConnectionContext], Awaitable[None]] | None) = None
+        self._allowed_origins: list[str] | None = None
 
         self.theme_preset = theme_preset
         self.window = window
@@ -111,6 +112,22 @@ class App(Server):
         self._session_initializer = initializer
 
     @property
+    def allowed_origins(self) -> tuple[str, ...] | None:
+        return self._allowed_origins
+
+    @allowed_origins.setter
+    def allowed_origins(self, origins: list[str] | tuple[str, ...] | None) -> None:
+        if origins is not None:
+            Validator.ensure(origins, list, tuple, None, attr_name='App.allowed_origins')
+
+            if not all(isinstance(origin, str) for origin in origins):
+                raise TreezeTypeError('Every allowed origin must be a string.')
+
+            origins = tuple(origins)
+
+        self._allowed_origins = origins
+
+    @property
     def resources(self) -> dict[str, str]:
         return self._resources
 
@@ -133,9 +150,9 @@ class App(Server):
     #  Session methods
     # ==========================================================================
 
-    def _create_session(self, state: dict[str, Any] | None = None):
+    def _create_session(self, state: dict[str, Any] | None = None, origin: str | None = None):
         """Create a runtime session for one connected client."""
-        return self._sessions._create_session(state=state)
+        return self._sessions._create_session(state=state, origin=origin)
 
     def _close_session(self, session) -> None:
         """Close a runtime session."""

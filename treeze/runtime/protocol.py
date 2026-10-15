@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Literal
+
 from ..core.validation import Validator
 
 # ______________________________________________________________________________________________________________________
@@ -119,4 +120,18 @@ class ServerDialogMessage:
         return ProtocolMessage(
             type='server.dialog',
             payload=payload,
+        )
+    
+@dataclass(frozen=True)
+class ServerCookieMessage:
+    session_id: str
+    operation_id: str
+
+    def to_protocol_message(self) -> ProtocolMessage:
+        return ProtocolMessage(
+            type='server.cookie',
+            payload={
+                'session_id': self.session_id,
+                'operation_id': self.operation_id,
+            },
         )

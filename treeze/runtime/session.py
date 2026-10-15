@@ -10,9 +10,13 @@ import asyncio
 from datetime import datetime, timezone
 from typing import Any, TYPE_CHECKING
 import uuid
+import secrets
+import time
+
+from starlette.responses import Response
 
 from .patch_engine import PatchEngine
-from .protocol import ClientSignalMessage, ServerActionsMessage, ServerPatchesMessage
+from .protocol import ClientSignalMessage, ServerActionsMessage, ServerPatchesMessage, ServerCookieMessage
 
 from ..core.exceptions import TreezeRuntimeError
 from ..core.node import Node
@@ -28,6 +32,8 @@ if TYPE_CHECKING:
     from ..widgets.primitives.window import Window
 
 # ______________________________________________________________________________________________________________________
+
+_COOKIE_OPERATION_TTL = 30.0
 class SessionManager:
 
     def __init__(self, app: App):
@@ -38,8 +44,8 @@ class SessionManager:
     #  Internal methods
     # ==========================================================================
 
-    def _create_session(self, state: dict[str, Any] | None = None) -> Session:
-        session = Session(self._app, state=state)
+    def _create_session(self, state: dict[str, Any] | None = None, origin: str | None = None) -> Session:
+        session = Session(self._app, state=state, origin=origin)
         self._sessions[session.id] = session
 
         return session
@@ -60,10 +66,11 @@ class SessionManager:
 
 class Session:
 
-    def __init__(self, app: App, state: dict[str, Any] | None = None):
+    def __init__(self, app: App, state: dict[str, Any] | None = None, origin: str | None = None):
         self._id = uuid.uuid4().hex
         self._app = app
         self._state = dict(state) if state is not None else {}
+        self._origin = origin
         self._widgets: dict[str, Widget] = {}  # Widgets are walked & stored here for lookup by events
         self._created_at = datetime.now(timezone.utc)
         self._closed = False
@@ -72,6 +79,7 @@ class Session:
         self._patch_engine = PatchEngine()
         self._outgoing: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
         self._pending_actions: list[dict[str, Any]] = []
+        self._cookie_operations: dict[str, tuple[float, bytes]] = {}
         self._handling_message = False
         self._message_lock = asyncio.Lock()
 
@@ -114,6 +122,22 @@ class Session:
     def closed(self) -> bool:
         """Read only. Has this session been closed?"""
         return self._closed
+
+    # ==========================================================================
+    # Public methods
+    # ==========================================================================
+
+    def set_cookie(self, key: str, value: str, **kwargs) -> None:
+        """Request the browser to set a cookie."""
+        response = Response()
+        response.set_cookie(key, value, **kwargs)
+        self._queue_cookie_response(response)
+
+    def delete_cookie(self, key: str, **kwargs) -> None:
+        """Request the browser to delete a cookie."""
+        response = Response()
+        response.delete_cookie(key, **kwargs)
+        self._queue_cookie_response(response)
 
     # ==========================================================================
     #  Internal Methods
@@ -225,6 +249,55 @@ class Session:
                 ServerPatchesMessage(patches=patches, actions=actions).to_protocol_message().to_dict()
             )
 
+    def _queue_cookie_response(self, response: Response) -> None:
+        if self.closed:
+            raise TreezeRuntimeError('Cannot modify cookies on a closed session.')
+
+        header = next((value for name, value in response.raw_headers if name == b'set-cookie'), None)
+
+        if header is None:
+            raise TreezeRuntimeError('Cookie response has no Set-Cookie header.')
+
+        now = time.monotonic()
+
+        # Discard expired operations
+        for operation_id, (expires_at, _) in tuple(self._cookie_operations.items()):
+            if expires_at <= now:
+                self._cookie_operations.pop(operation_id, None)
+
+        if len(self._cookie_operations) >= 32:
+            raise TreezeRuntimeError('Too many pending cookie operations.')
+
+        operation_id = secrets.token_urlsafe(32)
+
+        self._cookie_operations[operation_id] = (now + _COOKIE_OPERATION_TTL, header)
+
+        message = ServerCookieMessage(
+            session_id=self.id,
+            operation_id=operation_id,
+        )
+
+        try:
+            self._outgoing.put_nowait(message.to_protocol_message().to_dict())
+        except BaseException:
+            self._cookie_operations.pop(operation_id, None)
+            raise
+
+    def _consume_cookie_operation(self, operation_id: str) -> bytes | None:
+        """Consume a one-time cookie operation."""
+
+        operation = self._cookie_operations.pop(operation_id, None)
+
+        if operation is None or self.closed:
+            return None
+
+        expires_at, header = operation
+
+        if time.monotonic() >= expires_at:
+            return None
+
+        return header
+
     def _index_widgets(self) -> None:
         """Walk all widgets of the app and store them on self for reference"""
         self._widgets = {}
@@ -239,6 +312,7 @@ class Session:
             return
         self._closed = True
         self._pending_actions.clear()
+        self._cookie_operations.clear()
         while not self._outgoing.empty():
             self._outgoing.get_nowait()
 

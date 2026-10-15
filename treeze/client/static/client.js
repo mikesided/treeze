@@ -106,6 +106,12 @@ function handleMessage(message) {
             executeActions(message.payload.actions ?? []);
             return;
 
+        case 'server.cookie':
+            void applyCookieOperation(message.payload).catch(error => {
+                console.error('Treeze cookie operation failed:', error);
+            });
+            return;
+
         default:
             console.warn('Unknown Treeze message:', message);
     }
@@ -318,4 +324,29 @@ function collectEventArgs(element, event, dataNames) {
     }
 
     return args;
+}
+
+// ============================================================================
+// Cookies
+// ============================================================================
+
+async function applyCookieOperation(payload) {
+    const response = await fetch('/_treeze/session/cookie', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+        cache: 'no-store',
+        body: JSON.stringify({
+            session_id: payload.session_id,
+            operation_id: payload.operation_id,
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            `Cookie operation failed: HTTP ${response.status}`
+        );
+    }
 }
