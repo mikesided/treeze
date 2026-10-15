@@ -10,15 +10,20 @@ import inspect
 from pathlib import Path
 from typing import TYPE_CHECKING
 import uuid
+from collections.abc import Awaitable, Callable
+from typing import Any
+
+from ..runtime.session import SessionManager
+from ..runtime.connection import ConnectionContext
+from ..widgets.primitives.window import Window, _allow_window_construction
 
 from .enums import TreezeTheme
 from .exceptions import TreezeTypeError, TreezeValueError
 from .node import Node
 from .server import Server
-from ..runtime.session import SessionManager
 from .types.theme import Theme
 from .validation import Validator
-from ..widgets.primitives.window import Window, _allow_window_construction
+
 
 if TYPE_CHECKING:
     from ..widgets.primitives.window import Window
@@ -42,6 +47,7 @@ class App(Server):
         self._theme = Theme()
         self._resources: dict[str] = {'resources': 'resources'}
         self._sessions: SessionManager = SessionManager(self)
+        self._session_initializer: (Callable[[ConnectionContext], Awaitable[None]] | None) = None
 
         self.theme_preset = theme_preset
         self.window = window
@@ -94,6 +100,17 @@ class App(Server):
         self._theme_preset = Validator.ensure(theme, TreezeTheme, attr_name='App.theme_preset')
 
     @property
+    def session_initializer(self) -> Callable[[ConnectionContext], Awaitable[None]] | None:
+        return self._session_initializer
+
+    @session_initializer.setter
+    def session_initializer(self, initializer: Callable[[ConnectionContext], Awaitable[None]] | None):
+        if initializer is not None and not callable(initializer):
+            raise TreezeTypeError('App.session_initializer must be callable or None.')
+
+        self._session_initializer = initializer
+
+    @property
     def resources(self) -> dict[str, str]:
         return self._resources
 
@@ -116,9 +133,9 @@ class App(Server):
     #  Session methods
     # ==========================================================================
 
-    def _create_session(self):
+    def _create_session(self, state: dict[str, Any] | None = None):
         """Create a runtime session for one connected client."""
-        return self._sessions._create_session()
+        return self._sessions._create_session(state=state)
 
     def _close_session(self, session) -> None:
         """Close a runtime session."""

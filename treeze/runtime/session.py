@@ -38,8 +38,8 @@ class SessionManager:
     #  Internal methods
     # ==========================================================================
 
-    def _create_session(self) -> Session:
-        session = Session(self._app)
+    def _create_session(self, state: dict[str, Any] | None = None) -> Session:
+        session = Session(self._app, state=state)
         self._sessions[session.id] = session
 
         return session
@@ -60,9 +60,10 @@ class SessionManager:
 
 class Session:
 
-    def __init__(self, app: App):
+    def __init__(self, app: App, state: dict[str, Any] | None = None):
         self._id = uuid.uuid4().hex
         self._app = app
+        self._state = dict(state) if state is not None else {}
         self._widgets: dict[str, Widget] = {}  # Widgets are walked & stored here for lookup by events
         self._created_at = datetime.now(timezone.utc)
         self._closed = False
@@ -93,6 +94,11 @@ class Session:
     def app(self) -> App:
         """Read only. Parent App."""
         return self._app
+
+    @property
+    def state(self) -> dict[str, Any]:
+        """Application-defined state for this browser session."""
+        return self._state
 
     @property
     def window(self) -> Window:

@@ -24,6 +24,8 @@ from ..client.assets import STATIC_DIRECTORY
 from ..client.index import render_index
 from ..core.exceptions import TreezeError
 
+from .connection import ConnectionContext
+
 if TYPE_CHECKING:
     from .session import Session
     from ..core.app import App
@@ -47,6 +49,8 @@ def create_asgi_app(app: App) -> FastAPI:
     # Mount user-provided resources
     for name, rel_path in app.resources.items():
         abs_path = (app._app_dir / rel_path).resolve()
+        if not abs_path.is_dir():
+            continue
 
         asgi_app.mount(
             f'/{name}',
@@ -63,16 +67,23 @@ def create_asgi_app(app: App) -> FastAPI:
 
     @asgi_app.websocket('/ws')
     async def websocket(ws: WebSocket):
-        await ws.accept()
 
         session: Session | None = None
         sender: asyncio.Task | None = None
+        accepted = False
 
         try:
+            connection = ConnectionContext(ws)
+            if app.session_initializer is not None:
+                await app.session_initializer(connection)
 
-            session = app._create_session()
+            session = app._create_session(state=connection.state)
         
             node_tree = session._build()
+
+            await ws.accept(headers=connection._accept_headers())
+
+            accepted = True
 
             await ws.send_json(
                 ServerRenderMessage(
@@ -103,24 +114,32 @@ def create_asgi_app(app: App) -> FastAPI:
 
         except TreezeError as error:
             print(traceback.format_exc())
-            await ws.send_json(
-                ServerDialogMessage(
-                    level='error',
-                    title=type(error).__name__,
-                    message=str(error),
-                ).to_protocol_message().to_dict()
-            )
+
+            if accepted:
+                await ws.send_json(
+                    ServerDialogMessage(
+                        level='error',
+                        title=type(error).__name__,
+                        message=str(error),
+                    ).to_protocol_message().to_dict()
+                )
+            else:
+                await ws.close(code=1011)
 
         except Exception as error:
             print(traceback.format_exc())
-            await ws.send_json(
-                ServerDialogMessage(
-                    level='error',
-                    title='Internal Treeze Error',
-                    message='Treeze hit an internal error. Check the server logs.',
-                    details=str(error),
-                ).to_protocol_message().to_dict()
-            )
+
+            if accepted:
+                await ws.send_json(
+                    ServerDialogMessage(
+                        level='error',
+                        title='Internal Treeze Error',
+                        message='Treeze hit an internal error. Check the server logs.',
+                        details=str(error),
+                    ).to_protocol_message().to_dict()
+                )
+            else:
+                await ws.close(code=1011)
 
         finally:
             if sender is not None:

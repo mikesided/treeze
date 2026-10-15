@@ -271,6 +271,11 @@ class Widget(ABC, metaclass=_WidgetMeta):
     # ==========================================================================
 
     @property
+    def session(self) -> Session | None:
+        """Session owning this widget."""
+        return self._session
+
+    @property
     def classes(self) -> tuple[str, ...]:
         """Read only. CSS classes applied to this widget"""
         return tuple(self._extra_classes)

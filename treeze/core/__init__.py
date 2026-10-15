@@ -9,6 +9,7 @@ from .app import App
 from .signals import Signal
 from .widget import Widget
 from .client_action import ClientAction
+from ..runtime.connection import ConnectionContext
 
 from .enums import (
     Color,

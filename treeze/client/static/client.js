@@ -6,29 +6,59 @@ const applyPatch = createPatchHandler({ createElement, applyAttribute, applyStyl
 const socketUrl = new URL('/ws', window.location.href);
 socketUrl.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
-const socket = new WebSocket(socketUrl);
+let socket = null;
+
+//const socket = new WebSocket(socketUrl);
 
 
-socket.onopen = () => {
-    console.log('Connected to Treeze');
-};
+// ============================================================================
+// Connection
+// ============================================================================
 
+function connect(queryParams = {}) {
+    if (socket) {
+        socket.onmessage = null;
+        socket.onclose = null;
+        socket.onerror = null;
+        socket.close(1000, 'Reconnecting');
+    }
 
-socket.onmessage = (event) => {
-    const message = JSON.parse(event.data);
+    const socketUrl = new URL('/ws', window.location.href);
+    socketUrl.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
-    handleMessage(message);
-};
+    for (const [key, value] of Object.entries(queryParams)) {
+        socketUrl.searchParams.set(key, value);
+    }
 
+    const nextSocket = new WebSocket(socketUrl);
+    socket = nextSocket;
 
-socket.onclose = () => {
-    console.log('Disconnected from Treeze');
-};
+    nextSocket.onopen = () => {
+        console.log('Connected to Treeze');
+    };
 
+    nextSocket.onmessage = (event) => {
+        if (socket !== nextSocket) {
+            return;
+        }
 
-socket.onerror = (error) => {
-    console.error('WebSocket error:', error);
-};
+        handleMessage(JSON.parse(event.data));
+    };
+
+    nextSocket.onclose = () => {
+        console.log('Disconnected from Treeze');
+    };
+
+    nextSocket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
+}
+
+window.addEventListener('treeze:reconnect', (event) => {
+    connect(event.detail?.query_params ?? {});
+});
+
+connect();
 
 
 // ============================================================================

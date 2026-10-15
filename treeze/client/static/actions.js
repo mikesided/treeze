@@ -1,5 +1,6 @@
 const actionHandlers = new Map([
     ['open_url', executeOpenUrl],
+    ['reconnect', executeReconnect],
 ]);
 
 
@@ -33,4 +34,12 @@ function executeOpenUrl(action) {
     } else {
         window.location.assign(url.href);
     }
+}
+
+function executeReconnect(action) {
+    window.dispatchEvent(new CustomEvent('treeze:reconnect', {
+        detail: {
+            query_params: action.query_params ?? {},
+        },
+    }));
 }
