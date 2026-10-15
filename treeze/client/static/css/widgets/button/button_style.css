@@ -119,3 +119,7 @@
 .tz-button-link:enabled:active {
     transform: translateY(1px);
 }
+
+.tz-button:enabled:is(:hover, :focus-visible) {
+    border-color: var(--tz-color-primary);
+}

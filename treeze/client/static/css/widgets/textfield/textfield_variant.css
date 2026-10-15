@@ -1,0 +1,47 @@
+.tz-textfield-primary {
+    --tz-textfield-accent: var(--tz-color-primary);
+    --tz-textfield-accent-hover: var(--tz-color-primary-hover);
+    --tz-textfield-focus: var(--tz-color-primary);
+}
+
+.tz-textfield-secondary {
+    --tz-textfield-accent: var(--tz-color-secondary);
+    --tz-textfield-accent-hover: var(--tz-color-secondary-hover);
+    --tz-textfield-focus: var(--tz-color-secondary);
+}
+
+.tz-textfield-tertiary {
+    --tz-textfield-accent: var(--tz-color-tertiary);
+    --tz-textfield-accent-hover: var(--tz-color-tertiary-hover);
+    --tz-textfield-focus: var(--tz-color-tertiary);
+}
+
+.tz-textfield-success {
+    --tz-textfield-accent: var(--tz-color-success);
+    --tz-textfield-accent-hover: var(--tz-color-success-hover);
+    --tz-textfield-focus: var(--tz-color-success);
+}
+
+.tz-textfield-warning {
+    --tz-textfield-accent: var(--tz-color-warning);
+    --tz-textfield-accent-hover: var(--tz-color-warning-hover);
+    --tz-textfield-focus: var(--tz-color-warning);
+}
+
+.tz-textfield-danger {
+    --tz-textfield-accent: var(--tz-color-danger);
+    --tz-textfield-accent-hover: var(--tz-color-danger-hover);
+    --tz-textfield-focus: var(--tz-color-danger);
+}
+
+.tz-textfield-info {
+    --tz-textfield-accent: var(--tz-color-info);
+    --tz-textfield-accent-hover: var(--tz-color-info-hover);
+    --tz-textfield-focus: var(--tz-color-info);
+}
+
+.tz-textfield-muted {
+    --tz-textfield-accent: var(--tz-color-text-muted);
+    --tz-textfield-accent-hover: var(--tz-color-border-strong);
+    --tz-textfield-focus: var(--tz-color-text-muted);
+}

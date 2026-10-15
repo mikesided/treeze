@@ -99,6 +99,7 @@ class TextField(Widget):
             attributes={
                 'type': 'password' if self.echo_mode == EchoMode.PASSWORD else 'text',
                 'placeholder': self.placeholder_text,
+                'disabled': not self.enabled,
             },
             properties={
                 'value': self.text,

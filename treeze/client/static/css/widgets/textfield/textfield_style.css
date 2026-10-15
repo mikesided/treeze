@@ -1,0 +1,55 @@
+/*
+===============================================
+  Outlined
+===============================================
+*/
+
+.tz-textfield-outlined {
+    --tz-textfield-background: transparent;
+}
+
+/*
+===============================================
+  Filled
+===============================================
+*/
+
+.tz-textfield-filled {
+    --tz-textfield-background: var(--tz-color-surface-sunken);
+    --tz-textfield-hover-background: var(--tz-color-surface-hover);
+    --tz-textfield-border: transparent;
+}
+
+/*
+===============================================
+  Underlined
+===============================================
+*/
+
+.tz-textfield-underlined {
+    --tz-textfield-background: transparent;
+    --tz-textfield-disabled-background: transparent;
+
+    padding-left: 2px;
+    padding-right: 2px;
+
+    border-width: 0 0 1px;
+    border-radius: 0;
+}
+
+.tz-textfield-underlined:not(:disabled):not(.tz-disabled):focus {
+    outline: none;
+}
+
+/*
+===============================================
+  Ghost
+===============================================
+*/
+
+.tz-textfield-ghost {
+    --tz-textfield-background: transparent;
+    --tz-textfield-border: transparent;
+    --tz-textfield-disabled-background: transparent;
+    --tz-textfield-disabled-border: transparent;
+}
