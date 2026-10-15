@@ -5,7 +5,7 @@ Description:  Base class for a Text Field widget
 """
 # ______________________________________________________________________________________________________________________
 # Imports
-from ...core.enums import BrowserEvent, EchoMode, TextAlignment, TextFieldStyle, Variant
+from ...core.enums import BrowserEvent, EchoMode, EventData, TextAlignment, TextFieldStyle, Variant
 from ...core.events import EventBinding
 from ...core.node import Node
 from ...core.signals import Signal
@@ -34,7 +34,7 @@ class TextField(Widget):
         Variant.MUTED,
     )
 
-    text_changed = Signal(str) #TODO :implement browserevents and connect in render
+    text_changed = Signal(str)
     editing_finished = Signal()
     submitted = Signal()
     def __init__(
@@ -107,6 +107,8 @@ class TextField(Widget):
                 'text-align': self.text_alignment,
             },
             events={
-                #BrowserEvent.CLICK: EventBinding(signal='clicked'),
+                BrowserEvent.INPUT: EventBinding(signal='text_changed', data=(EventData.VALUE,)),
+                BrowserEvent.EDITING_FINISHED: EventBinding(signal='editing_finished'),
+                BrowserEvent.RETURN_PRESSED: EventBinding(signal='submitted'),
             },
         )

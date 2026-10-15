@@ -38,7 +38,7 @@ ColorValue = str | Color | ConeGradient | LinearGradient | RadialGradient
 _widget_id_counter = count(1)
 
 class _WidgetMeta(ABCMeta):
-    def __call__(cls, *args: Any, **kwargs: Any) -> Widget:
+    def __call__(cls, *args: Any, **kwargs: Any):
         widget = super().__call__(*args, **kwargs)
         parent = widget.__dict__.pop('_pending_parent', None)
         if parent is not None and parent._CHILDHOST is True:

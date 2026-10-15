@@ -242,6 +242,31 @@ function applyStyle(element, name, value) {
 // ============================================================================
 
 function bindEvents(element, events, widgetId) {
+    if ('editing_finished' in events || 'return_pressed' in events) {
+        let edited = false;
+
+        element.addEventListener('input', () => {
+            edited = true;
+        });
+        element.addEventListener('blur', () => {
+            if (edited) {
+                edited = false;
+                element.dispatchEvent(new Event('editing_finished'));
+            }
+        });
+        element.addEventListener('keydown', (event) => {
+            if (element.matches(':disabled') || event.key !== 'Enter' ||
+                event.isComposing || event.keyCode === 229 || event.repeat) {
+                return;
+            }
+
+            // Enter commits the edit; a subsequent blur must not commit it again.
+            edited = false;
+            element.dispatchEvent(new Event('return_pressed'));
+            element.dispatchEvent(new Event('editing_finished'));
+        });
+    }
+
     for (const [browserEvent, eventConfig] of Object.entries(events)) {
         element.addEventListener(browserEvent, (event) => {
             if (element.matches(':disabled')) {

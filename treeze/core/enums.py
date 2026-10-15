@@ -18,6 +18,9 @@ class ButtonStyle(StrEnum):
 
 class BrowserEvent(StrEnum):
     CLICK = 'click'
+    INPUT = 'input'
+    EDITING_FINISHED = 'editing_finished'
+    RETURN_PRESSED = 'return_pressed'
 
 class CardStyle(StrEnum):
     FLAT = 'flat'
