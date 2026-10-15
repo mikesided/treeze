@@ -56,6 +56,8 @@ class Button(Container):
         **kwargs
     ):
         super().__init__(*args, **kwargs)
+        self._text = None
+        self._icon = None
         self._icon_position = Validator.ensure(icon_position, InsertPosition, attr_name='Button(icon_position=...)')
         self._label: Label = Label(parent=self)
         self._image: Image = Image(margin=(0, 5, 0, 5), style=ImageStyle.FIT, parent=self)

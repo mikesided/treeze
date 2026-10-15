@@ -206,6 +206,10 @@ class Color(StrEnum):
     PINK_600 = '#db2777'
     PINK_700 = '#be185d'
 
+class EchoMode(StrEnum):
+    NORMAL = 'normal'
+    PASSWORD = 'password'
+
 class EventData(StrEnum):
     CHECKED = 'checked'
     EVENT_TYPE = 'event_type'
@@ -288,6 +292,12 @@ class TextAlignment(StrEnum):
     CENTER = 'center'
     RIGHT = 'right'
     JUSTIFY = 'justify'
+
+class TextFieldStyle(StrEnum):
+    OUTLINED = 'outlined'
+    FILLED = 'filled'
+    UNDERLINED = 'underlined'
+    GHOST = 'ghost'
 
 class TreezeTheme(StrEnum):
     CUSTOM = 'custom'

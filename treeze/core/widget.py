@@ -151,10 +151,9 @@ class Widget(ABC, metaclass=_WidgetMeta):
         visible: bool = True,
         collapsed: bool = False,
         enabled: bool = True,
-
-        # Read Only
         classes: list[str] | None = None,
         parent: Container | None = None,
+        p: Container | None = None,  # Short code
     ):
         # Establish ownership before setters run, without tracking partial initialization.
         object.__setattr__(self, '_suspend_dirty_tracking', True)
@@ -172,6 +171,8 @@ class Widget(ABC, metaclass=_WidgetMeta):
             horizontal_size_policy = hsp
         if vsp is not None and vertical_size_policy is None:
             vertical_size_policy = vsp
+        if p is not None and parent is None:
+            parent = p
         
         # Internal properties
         self._id = create_widget_id()

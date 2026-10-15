@@ -165,6 +165,10 @@ def create_asgi_app(app: App) -> FastAPI:
 
         NOTE: For multiple server workers, the HTTP Request must reach the same worker that owns the websocket
         """
+        session = app._sessions._get_session(payload.session_id)
+        if session is None or session.closed:
+            raise HTTPException(status_code=404, detail='Unknown session.')
+        
         # Reject cross-origin requests
         if (not session._origin or request.headers.get('origin') != session._origin):
             raise HTTPException(status_code=403, detail='Invalid request origin.')
@@ -172,10 +176,6 @@ def create_asgi_app(app: App) -> FastAPI:
         fetch_site = request.headers.get('sec-fetch-site')
         if fetch_site is not None and fetch_site != 'same-origin':
             raise HTTPException(status_code=403, detail='Cross-origin request rejected.')
-
-        session = app._sessions._get_session(payload.session_id)
-        if session is None or session.closed:
-            raise HTTPException(status_code=404, detail='Unknown session.')
 
         header = session._consume_cookie_operation(payload.operation_id)
         if header is None:
