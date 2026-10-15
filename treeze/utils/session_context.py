@@ -12,6 +12,8 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import TYPE_CHECKING
 
+from .ids import use_id_scope
+
 if TYPE_CHECKING:
     from ..runtime.session import Session
 
@@ -26,6 +28,7 @@ def get_current_session() -> Session | None:
 def use_session(session: Session) -> Iterator[None]:
     token = _current_session.set(session)
     try:
-        yield
+        with use_id_scope(session.id_scope):
+            yield
     finally:
         _current_session.reset(token)

@@ -64,6 +64,8 @@ class Container(Widget, ABC):
                 )
             ancestor = ancestor.parent
 
+        widget._validate_parent(self)
+
         # Validate if the widget already has a parent, if so remove it
         if widget.parent:
             widget.parent._remove_widget(widget)
@@ -76,9 +78,6 @@ class Container(Widget, ABC):
 
         self._children.insert(index, widget)
         widget._set_parent(self)
-
-        if self._session is not None:
-            widget._set_session(self._session)
 
         self.children_changed.emit(tuple(self.children))
         self._mark_dirty()

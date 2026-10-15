@@ -24,7 +24,7 @@ from ..core.node import Node
 from ..core.client_action import ClientAction
 from ..core.validation import Validator
 
-from ..utils.ids import create_id_scope, use_id_scope
+from ..utils.ids import create_id_scope
 from ..utils.session_context import use_session
 
 if TYPE_CHECKING:
@@ -72,7 +72,7 @@ class Session:
         self._app = app
         self._state = dict(state) if state is not None else {}
         self._origin = origin
-        self._widgets: dict[str, Widget] = {}  # Widgets are walked & stored here for lookup by events
+        self._widgets: dict[str, Widget] = {}  # Only mounted widgets receive browser events
         self._created_at = datetime.now(timezone.utc)
         self._closed = False
 
@@ -86,9 +86,10 @@ class Session:
 
         self.id_scope = create_id_scope()
 
-        with use_session(self), use_id_scope(self.id_scope):
+        with use_session(self):
             # Session contains one main initialized window (generated from the app)
             self._window = app._create_window()
+            self._register_subtree(self._window)
 
     # ==========================================================================
     #  Properties
@@ -149,19 +150,16 @@ class Session:
         if self.closed:
             raise TreezeRuntimeError('Cannot build a closed session.')
 
-        with use_session(self), use_id_scope(self.id_scope):
-            self._index_widgets()
+        with use_session(self):
             processed_widgets = self._dirty_widgets
             self._dirty_widgets = set()
             try:
                 node_tree = self.app._build_window(self.window)
-                self._index_widgets()
                 self._patch_engine.capture_tree(node_tree)
             except BaseException:
                 self._dirty_widgets.update(processed_widgets)
                 raise
-            # A full initial render also covers widgets built outside this session.
-            self._clear_dirty_state(processed_widgets | set(self._widgets.values()))
+            self._clear_dirty_state(processed_widgets)
 
         return node_tree
 
@@ -175,11 +173,10 @@ class Session:
         async with self._message_lock:
             if self.closed:
                 raise TreezeRuntimeError('Cannot handle messages on a closed session.')
-            with use_session(self), use_id_scope(self.id_scope):
+            with use_session(self):
                 if message_type != 'client.signal':
                     raise TreezeRuntimeError(f'Unsupported client message type: {message_type!r}.')
                 signal_message = ClientSignalMessage.from_payload(payload)
-                self._index_widgets()
                 self._handling_message = True
                 try:
                     await self._handle_signal_message(signal_message)
@@ -189,7 +186,6 @@ class Session:
                 finally:
                     self._handling_message = False
 
-                self._index_widgets()
                 processed_widgets = self._dirty_widgets
                 self._dirty_widgets = set()
                 try:
@@ -329,37 +325,36 @@ class Session:
 
         return header
 
-    def _index_widgets(self) -> None:
-        """Walk all widgets of the app and store them on self for reference"""
-        previous = self._widgets
-        self._widgets = {}
-
-        for widget in self.window._walk_widgets():
+    def _register_subtree(self, root: Widget) -> None:
+        """Mount only this subtree; session ownership never transfers."""
+        widgets = tuple(root._walk_widgets())
+        for widget in widgets:
             widget._set_session(self)
+        for widget in widgets:
             self._widgets[widget.id] = widget
+            if widget._is_dirty:
+                self._dirty_widgets.add(widget)
+        for widget in widgets:
+            for source in widget._sync_triggers:
+                source._mark_dirty()
 
-        for widget_id, widget in previous.items():
-            if self._widgets.get(widget_id) is not widget:
-                widget._clear_sync_registrations()
-                widget._set_session(None)
-                self._dirty_widgets.discard(widget)
-        for widget in self._widgets.values():
-            for event in widget._sync_targets:
-                targets = widget._active_sync_targets(event)
-                binding = widget._node.events.get(event) if widget._node is not None else None
-                expected = {target.id: target._SYNC_PROPERTY for target in targets.values()}
-                if expected != (binding.sync if binding is not None else {}):
-                    widget._mark_dirty()
+    def _unregister_subtree(self, root: Widget) -> None:
+        widgets = tuple(root._walk_widgets())
+        for widget in widgets:
+            self._widgets.pop(widget.id, None)
+            self._dirty_widgets.discard(widget)
+        for widget in widgets:
+            for source in widget._sync_triggers:
+                source._mark_dirty()
 
     def _close(self) -> None:
         """Close the session and release pending outgoing updates."""
         if self.closed:
             return
         self._closed = True
-        for widget in tuple(self._widgets.values()):
-            widget._clear_sync_registrations()
-            widget._set_session(None)
         self._widgets.clear()
+        self._window = None
+        self._patch_engine = PatchEngine()
         self._dirty_widgets.clear()
         self._pending_actions.clear()
         self._cookie_operations.clear()
@@ -367,7 +362,7 @@ class Session:
             self._outgoing.get_nowait()
 
     def _mark_widget_dirty(self, widget: Widget) -> None:
-        if self.closed:
+        if self.closed or self._widgets.get(widget.id) is not widget:
             return
 
         self._dirty_widgets.add(widget)

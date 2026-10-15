@@ -160,7 +160,13 @@ class Widget(ABC, metaclass=_WidgetMeta):
     ):
         # Establish ownership before setters run, without tracking partial initialization.
         object.__setattr__(self, '_suspend_dirty_tracking', True)
-        object.__setattr__(self, '_session', get_current_session())
+        session = get_current_session()
+        initial_parent = parent if parent is not None else p
+        if session is None and isinstance(initial_parent, Widget):
+            session = initial_parent._session
+        if session is not None and session.closed:
+            raise TreezeRuntimeError('Cannot create widgets in a closed session.')
+        object.__setattr__(self, '_session', session)
 
         for name, value in (('horizontal_size_policy', horizontal_size_policy),
                             ('vertical_size_policy', vertical_size_policy), ('hsp', hsp), ('vsp', vsp)):
@@ -178,13 +184,15 @@ class Widget(ABC, metaclass=_WidgetMeta):
             parent = p
         
         # Internal properties
-        self._id = create_widget_id()
+        # Unowned widgets keep distinct IDs when later attached to a session.
+        self._id = self._session.id_scope.create_widget_id() if self._session is not None else f'u{create_widget_id()}'
         self._node: Node | None = None
         self._dirty: bool = False
         
         self._signals: dict[str, BoundSignal] = {}
         self._sync_targets: dict[BrowserEvent, WeakSet[Widget]] = {}
         self._sync_triggers: WeakKeyDictionary[Widget, set[BrowserEvent]] = WeakKeyDictionary()
+        self._sync_dependents: WeakSet[Widget] = WeakSet()  # Sync targets affected by this ancestor's enabled state
         self._container_orientation: Orientation | None = None  # Maintained by `_set_parent`: holds the container's orientation
         self._composite_classes: list[str] = []
         self._extra_classes: list[str] = []  # Holds user-defined classes
@@ -532,6 +540,9 @@ class Widget(ABC, metaclass=_WidgetMeta):
         self._enabled = enabled
 
         if old_state != self.enabled:
+            for target in self._sync_dependents:
+                for source in target._sync_triggers:
+                    source._mark_dirty()
             self.enabled_changed.emit(self.enabled)
 
     @property
@@ -670,8 +681,28 @@ class Widget(ABC, metaclass=_WidgetMeta):
         old_parent = self._parent
 
         widget = Validator.ensure(widget, Widget, None, attr_name='Widget._set_parent(widget=...)')
+        if old_parent is widget:
+            return
+        session = self._session
+        if session is not None and session._widgets.get(self.id) is self:
+            session._unregister_subtree(self)
+        ancestor = old_parent
+        while ancestor is not None:
+            ancestor._sync_dependents.difference_update(self._sync_dependents)
+            ancestor = ancestor.parent
         self._parent = widget
         self._container_orientation = widget._ORIENTATION if widget else None
+        ancestor = widget
+        while ancestor is not None:
+            ancestor._sync_dependents.update(self._sync_dependents)
+            ancestor = ancestor.parent
+        if widget is not None and widget._session is not None:
+            session = widget._session
+            if session._widgets.get(widget.id) is widget:
+                session._register_subtree(self)
+            else:
+                for child in self._walk_widgets():
+                    child._set_session(session)
 
         # Emit parent_changed signal
         self.parent_changed.emit(old_parent, self._parent)
@@ -680,8 +711,34 @@ class Widget(ABC, metaclass=_WidgetMeta):
         """Yield any widgets owned by this widget. Used for event callback."""
         yield self
 
-    def _set_session(self, session: Session | None = None) -> None:
-        self._session = session
+    def _validate_session(self, session: Session) -> None:
+        if session.closed:
+            raise TreezeRuntimeError('Cannot attach widgets to a closed session.')
+        if self._session is session:
+            return
+        if self._session is not None:
+            raise TreezeValueError('A widget cannot move between sessions.')
+        for related in (*self._sync_triggers, *(target for targets in self._sync_targets.values() for target in targets)):
+            if related._session is not None and related._session is not session:
+                raise TreezeValueError('Synchronization widgets must belong to the same session.')
+
+    def _validate_parent(self, parent: Widget | None) -> None:
+        if parent is None:
+            return
+        session = parent._session
+        if session is not None:
+            for widget in self._walk_widgets():
+                widget._validate_session(session)
+        elif self._session is not None:
+            ancestor = parent
+            while ancestor is not None:
+                ancestor._validate_session(self._session)
+                ancestor = ancestor.parent
+
+    def _set_session(self, session: Session) -> None:
+        self._validate_session(session)
+        if self._session is None:
+            self._session = session
 
     def sync_on(self, *triggers: Signal | BoundSignal | BrowserEvent) -> None:
         """Synchronize this widget's browser value before a trigger's callbacks."""
@@ -717,6 +774,10 @@ class Widget(ABC, metaclass=_WidgetMeta):
             if self not in targets:
                 targets.add(self)
                 self._sync_triggers.setdefault(owner, set()).add(event)
+                ancestor = self
+                while ancestor is not None:
+                    ancestor._sync_dependents.add(self)
+                    ancestor = ancestor.parent
                 owner._mark_dirty()
 
     def _is_enabled_in_tree(self) -> bool:
@@ -736,21 +797,6 @@ class Widget(ABC, metaclass=_WidgetMeta):
             if target._session is session and session._widgets.get(target.id) is target
             and target._is_enabled_in_tree()
         }
-
-    def _clear_sync_registrations(self) -> None:
-        for owner, events in tuple(self._sync_triggers.items()):
-            for event in events:
-                owner._sync_targets[event].discard(self)
-            owner._mark_dirty()
-        for event, targets in self._sync_targets.items():
-            for target in tuple(targets):
-                events = target._sync_triggers.get(self)
-                if events is not None:
-                    events.discard(event)
-                    if not events:
-                        del target._sync_triggers[self]
-        self._sync_triggers.clear()
-        self._sync_targets.clear()
 
     def _validate_sync_value(self, value: Any) -> Any:
         raise TreezeRuntimeError(f'{type(self).__name__} does not support synchronization.')
