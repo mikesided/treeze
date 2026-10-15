@@ -23,6 +23,7 @@ class TextField(Widget):
     _STYLE_PREFIX = None
     _VARIANT_PREFIX = None
     _ALLOW_DISABLED = True
+    _SYNC_PROPERTY = 'value'
     _SUPPORTED_VARIANTS = (
         Variant.PRIMARY,
         Variant.SECONDARY,
@@ -35,6 +36,7 @@ class TextField(Widget):
     )
 
     text_changed = Signal(str)
+    value_changed = Signal(str)
     editing_finished = Signal()
     submitted = Signal()
     def __init__(
@@ -108,7 +110,14 @@ class TextField(Widget):
             },
             events={
                 BrowserEvent.INPUT: EventBinding(signal='text_changed', data=(EventData.VALUE,)),
+                BrowserEvent.CHANGE: EventBinding(signal='value_changed', data=(EventData.VALUE,)),
                 BrowserEvent.EDITING_FINISHED: EventBinding(signal='editing_finished'),
                 BrowserEvent.RETURN_PRESSED: EventBinding(signal='submitted'),
             },
         )
+
+    def _validate_sync_value(self, value):
+        return Validator.ensure(value, str, attr_name='TextField synchronized value')
+
+    def _apply_sync_value(self, value) -> None:
+        self._text = value

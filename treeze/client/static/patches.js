@@ -1,5 +1,5 @@
 // Rendering helpers are supplied by client.js to avoid circular imports.
-export function createPatchHandler({ createElement, applyAttribute, applyStyle }) {
+export function createPatchHandler({ createElement, applyAttribute, applyStyle, bindEvents }) {
     // ============================================================================
     // Patches
     // ============================================================================
@@ -8,6 +8,7 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         ['set_text', applySetTextPatch],
         ['set_attribute', applySetAttributePatch],
         ['set_property', applySetPropertyPatch],
+        ['set_events', applySetEventsPatch],
         ['set_style', applySetStylePatch],
         ['add_class', applyAddClassPatch],
         ['remove_class', applyRemoveClassPatch],
@@ -24,7 +25,7 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         const handler = patchHandlers.get(patch.op);
 
         if (!handler) {
-            console.warn('Unknown Treeze patch:', patch);
+            console.warn('Unknown Treeze patch:', patch.op);
             return;
         }
 
@@ -41,7 +42,7 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         const element = findElementByWidgetId(patch.target_id);
 
         if (!element) {
-            console.warn('Patch target not found:', patch);
+            console.warn('Patch target not found:', patch.target_id);
             return;
         }
 
@@ -53,7 +54,7 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         const element = findElementByWidgetId(patch.target_id);
 
         if (!element) {
-            console.warn('Patch target not found:', patch);
+            console.warn('Patch target not found:', patch.target_id);
             return;
         }
 
@@ -69,11 +70,20 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         const element = findElementByWidgetId(patch.target_id);
 
         if (!element) {
-            console.warn('Patch target not found:', patch);
+            console.warn('Patch target not found:', patch.target_id);
             return;
         }
 
-        element[patch.data.name] = patch.data.value;
+        if (element[patch.data.name] !== patch.data.value) {
+            element[patch.data.name] = patch.data.value;
+        }
+    }
+
+    function applySetEventsPatch(patch) {
+        const element = findElementByWidgetId(patch.target_id);
+        if (element) {
+            bindEvents(element, patch.data.events, patch.target_id);
+        }
     }
 
 
@@ -81,7 +91,7 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         const element = findElementByWidgetId(patch.target_id);
 
         if (!element) {
-            console.warn('Patch target not found:', patch);
+            console.warn('Patch target not found:', patch.target_id);
             return;
         }
 
@@ -97,7 +107,7 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         const element = findElementByWidgetId(patch.target_id);
 
         if (!element) {
-            console.warn('Patch target not found:', patch);
+            console.warn('Patch target not found:', patch.target_id);
             return;
         }
 
@@ -109,7 +119,7 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         const element = findElementByWidgetId(patch.target_id);
 
         if (!element) {
-            console.warn('Patch target not found:', patch);
+            console.warn('Patch target not found:', patch.target_id);
             return;
         }
 
@@ -121,7 +131,7 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         const element = findElementByWidgetId(patch.target_id);
 
         if (!element) {
-            console.warn('Patch target not found:', patch);
+            console.warn('Patch target not found:', patch.target_id);
             return;
         }
 
@@ -134,7 +144,7 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         const element = findElementByWidgetId(patch.target_id);
 
         if (!element) {
-            console.warn('Patch target not found:', patch);
+            console.warn('Patch target not found:', patch.target_id);
             return;
         }
 
@@ -149,7 +159,7 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         const element = findElementByWidgetId(patch.target_id);
 
         if (!element) {
-            console.warn('Patch target not found:', patch);
+            console.warn('Patch target not found:', patch.target_id);
             return;
         }
 
@@ -162,7 +172,7 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         const element = findElementByWidgetId(patch.target_id);
 
         if (!element) {
-            console.warn('Patch target not found:', patch);
+            console.warn('Patch target not found:', patch.target_id);
             return;
         }
 
@@ -178,7 +188,7 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         const element = findElementByWidgetId(patch.target_id);
         const parent = findElementByWidgetId(patch.data.parent_id);
         if (!element || !parent) {
-            console.warn('Move target or parent not found:', patch);
+            console.warn('Move target or parent not found:', patch.target_id);
             return;
         }
         const siblings = [...parent.children].filter((child) => child !== element);
@@ -194,7 +204,7 @@ export function createPatchHandler({ createElement, applyAttribute, applyStyle }
         const element = findElementByWidgetId(patch.target_id);
 
         if (!element) {
-            console.warn('Patch target not found:', patch);
+            console.warn('Patch target not found:', patch.target_id);
             return;
         }
 

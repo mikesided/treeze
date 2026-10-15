@@ -25,10 +25,12 @@ class EventBinding:
     kwargs: dict[str, JsonValue] = field(default_factory=dict)
     data: tuple[EventData | str, ...] = ()
     actions: tuple[ClientAction, ...] = ()
+    sync: dict[str, str] = field(default_factory=dict)
 
     def serialize(self) -> dict:
         return {
             'signal': self.signal,
+            'sync': self.sync,
             'actions': [action.serialize() for action in self.actions],
             'args': list(self.args),
             'kwargs': self.kwargs,

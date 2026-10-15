@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 from ..core.validation import Validator
+from ..core.exceptions import TreezeValueError
 
 # ______________________________________________________________________________________________________________________
 
@@ -40,15 +41,21 @@ class ProtocolMessage:
 @dataclass(frozen=True)
 class ClientSignalMessage:
     widget_id: str
-    signal: str
+    signal: str | None
     args: tuple[Any, ...] = ()
     kwargs: dict[str, Any] | None = None
+    browser_event: str | None = None
+    sync: dict[str, Any] | None = None
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> ClientSignalMessage:
         Validator.ensure(payload, dict, attr_name='client.signal.payload')
         widget_id = Validator.ensure(payload.get('widget_id'), str, attr_name='client.signal.payload.widget_id')
-        signal = Validator.ensure(payload.get('signal'), str, attr_name='client.signal.payload.signal')
+        signal = Validator.ensure(payload.get('signal'), str, None, attr_name='client.signal.payload.signal')
+        browser_event = Validator.ensure(payload.get('browser_event'), str, None, attr_name='client.signal.payload.browser_event')
+        sync = Validator.ensure(payload.get('sync'), dict, None, attr_name='client.signal.payload.sync')
+        if signal is None and browser_event is None:
+            raise TreezeValueError('A client signal requires a signal or browser event.')
         args = Validator.ensure(payload.get('args', ()), list, tuple, attr_name='client.signal.payload.args')
         kwargs = Validator.ensure(payload.get('kwargs'), dict, None, attr_name='client.signal.payload.kwargs')
 
@@ -61,6 +68,8 @@ class ClientSignalMessage:
             signal=signal,
             args=tuple(args),
             kwargs=kwargs if kwargs is not None else {},
+            browser_event=browser_event,
+            sync=sync,
         )
 
 

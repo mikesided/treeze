@@ -1,7 +1,9 @@
 import { executeActions } from './actions.js';
 import { createPatchHandler } from './patches.js';
 
-const applyPatch = createPatchHandler({ createElement, applyAttribute, applyStyle });
+const applyPatch = createPatchHandler({ createElement, applyAttribute, applyStyle, bindEvents });
+const eventControllers = new WeakMap();
+const editingStates = new WeakMap();
 
 const socketUrl = new URL('/ws', window.location.href);
 socketUrl.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -73,13 +75,18 @@ function sendMessage(type, payload = {}) {
 }
 
 
-function sendSignal(widgetId, signalName, args = [], kwargs = {}) {
-    sendMessage('client.signal', {
+function sendSignal(widgetId, signalName, args = [], kwargs = {}, browserEvent = null, sync = {}) {
+    const payload = {
         widget_id: widgetId,
         signal: signalName,
         args,
         kwargs,
-    });
+        browser_event: browserEvent,
+    };
+    if (Object.keys(sync).length) {
+        payload.sync = sync;
+    }
+    sendMessage('client.signal', payload);
 }
 
 
@@ -121,7 +128,7 @@ function handleMessage(message) {
 function handleRenderMessage(payload) {
     const rootNode = payload.root;
 
-    console.log('Received render:', rootNode);
+    console.log('Received render');
 
     const element = createElement(rootNode);
 
@@ -132,7 +139,7 @@ function handleRenderMessage(payload) {
 
 
 function handlePatchesMessage(payload) {
-    console.log('Received patches:', payload.patches);
+    console.log('Received patches');
 
     for (const patch of payload.patches ?? []) {
         applyPatch(patch);
@@ -242,18 +249,26 @@ function applyStyle(element, name, value) {
 // ============================================================================
 
 function bindEvents(element, events, widgetId) {
+    eventControllers.get(element)?.abort();
+    const controller = new AbortController();
+    eventControllers.set(element, controller);
+    const options = { signal: controller.signal };
     if ('editing_finished' in events || 'return_pressed' in events) {
-        let edited = false;
+        let state = editingStates.get(element);
+        if (!state) {
+            state = { edited: false };
+            editingStates.set(element, state);
+        }
 
         element.addEventListener('input', () => {
-            edited = true;
-        });
+            state.edited = true;
+        }, options);
         element.addEventListener('blur', () => {
-            if (edited) {
-                edited = false;
+            if (state.edited) {
+                state.edited = false;
                 element.dispatchEvent(new Event('editing_finished'));
             }
-        });
+        }, options);
         element.addEventListener('keydown', (event) => {
             if (element.matches(':disabled') || event.key !== 'Enter' ||
                 event.isComposing || event.keyCode === 229 || event.repeat) {
@@ -261,10 +276,10 @@ function bindEvents(element, events, widgetId) {
             }
 
             // Enter commits the edit; a subsequent blur must not commit it again.
-            edited = false;
+            state.edited = false;
             element.dispatchEvent(new Event('return_pressed'));
             element.dispatchEvent(new Event('editing_finished'));
-        });
+        }, options);
     }
 
     for (const [browserEvent, eventConfig] of Object.entries(events)) {
@@ -273,8 +288,16 @@ function bindEvents(element, events, widgetId) {
                 return;
             }
             const signalConfig = normalizeSignalConfig(eventConfig);
+            const sync = {};
+            for (const [targetId, property] of Object.entries(signalConfig.sync)) {
+                const target = document.querySelector(`[data-tz-id="${targetId}"]`);
+                if (!target) {
+                    return;
+                }
+                sync[targetId] = target[property];
+            }
             executeActions(signalConfig.actions);
-            if (!signalConfig.signal) {
+            if (!signalConfig.signal && !Object.keys(signalConfig.sync).length) {
                 return;
             }
             const eventArgs = collectEventArgs(
@@ -291,8 +314,10 @@ function bindEvents(element, events, widgetId) {
                     ...eventArgs,
                 ],
                 signalConfig.kwargs,
+                browserEvent,
+                sync,
             );
-        });
+        }, options);
     }
 }
 
@@ -305,6 +330,7 @@ function normalizeSignalConfig(eventConfig) {
             kwargs: {},
             data: [],
             actions: [],
+            sync: {},
         };
     }
 
@@ -314,6 +340,7 @@ function normalizeSignalConfig(eventConfig) {
         kwargs: eventConfig.kwargs ?? {},
         data: eventConfig.data ?? [],
         actions: eventConfig.actions ?? [],
+        sync: eventConfig.sync ?? {},
     };
 }
 

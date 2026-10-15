@@ -67,7 +67,7 @@ def diff_subtrees(old: list[SerializedNode], new: list[SerializedNode]) -> list[
             children[node_id] = []
             children[parent_id].append(node_id)
             current_parents[node_id] = parent_id
-        elif previous.get('tag') != node.get('tag') or previous.get('events', {}) != node.get('events', {}):
+        elif previous.get('tag') != node.get('tag'):
             patches.append({
                 'op': PatchOp.REPLACE_NODE, 'target_id': node_id,
                 'data': {'node': shallow, 'preserve_children': True},
@@ -123,17 +123,12 @@ def _diff_node(
 
     target_id = new_id
 
-    # Events are annoying to patch safely because the browser listener may need
-    # to be removed/rebound. For now, replace the node if event bindings change.
     if old.get('events', {}) != new.get('events', {}):
         patches.append({
-            'op': PatchOp.REPLACE_NODE,
+            'op': PatchOp.SET_EVENTS,
             'target_id': target_id,
-            'data': {
-                'node': new,
-            },
+            'data': {'events': new.get('events', {})},
         })
-        return
 
     if old.get('text') != new.get('text'):
         patches.append({

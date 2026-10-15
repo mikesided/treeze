@@ -18,7 +18,8 @@ from starlette.responses import Response
 from .patch_engine import PatchEngine
 from .protocol import ClientSignalMessage, ServerActionsMessage, ServerPatchesMessage, ServerCookieMessage
 
-from ..core.exceptions import TreezeRuntimeError
+from ..core.exceptions import TreezeError, TreezeRuntimeError
+from ..core.enums import BrowserEvent
 from ..core.node import Node
 from ..core.client_action import ClientAction
 from ..core.validation import Validator
@@ -149,6 +150,7 @@ class Session:
             raise TreezeRuntimeError('Cannot build a closed session.')
 
         with use_session(self), use_id_scope(self.id_scope):
+            self._index_widgets()
             processed_widgets = self._dirty_widgets
             self._dirty_widgets = set()
             try:
@@ -177,6 +179,7 @@ class Session:
                 if message_type != 'client.signal':
                     raise TreezeRuntimeError(f'Unsupported client message type: {message_type!r}.')
                 signal_message = ClientSignalMessage.from_payload(payload)
+                self._index_widgets()
                 self._handling_message = True
                 try:
                     await self._handle_signal_message(signal_message)
@@ -206,28 +209,56 @@ class Session:
                 f'Trying to find widget for client signal but no widget found for id {message.widget_id!r}.'
             )
 
-        # Check server-owned state; browser attributes cannot authorize a signal.
-        owner = widget
-        while owner is not None:
-            if owner.enabled is False:
-                return
-            owner = owner.parent
+        if self.closed or widget._session is not self:
+            raise TreezeRuntimeError('Cannot handle an event outside the active session.')
+        if not widget._is_enabled_in_tree():
+            return
+        bindings = widget._node.events if widget._node is not None else {}
+        if message.browser_event is not None:
+            try:
+                event = BrowserEvent(message.browser_event)
+            except ValueError:
+                raise TreezeRuntimeError('Unknown browser event.') from None
+            binding = bindings.get(event)
+        else:
+            matches = [(event, binding) for event, binding in bindings.items() if binding.signal == message.signal]
+            if not matches or (len(matches) > 1 and (
+                message.sync is not None or any(widget._active_sync_targets(event) for event, _ in matches)
+            )):
+                raise TreezeRuntimeError('Client signal does not identify a unique browser event.')
+            event, binding = matches[0]
+        if binding is None or binding.signal != message.signal:
+            raise TreezeRuntimeError('Signal is not exposed for this browser event.')
 
-        browser_bound = widget._node is not None and any(
-            binding.signal == message.signal for binding in widget._node.events.values()
-        )
-        if not browser_bound:
-            raise TreezeRuntimeError(
-                f'Signal {message.signal!r} on widget {message.widget_id!r} '
-                'is not exposed to browser events.'
+        if message.signal is not None:
+            try:
+                widget._get_signal(message.signal)._validate_emit_arguments(message.args, message.kwargs or {})
+            except TreezeError:
+                # Event arguments may contain password text; never include values.
+                raise TreezeRuntimeError('Invalid browser signal arguments.') from None
+        elif message.args or message.kwargs:
+            raise TreezeRuntimeError('An event without a signal cannot supply signal arguments.')
+
+        targets = widget._active_sync_targets(event)
+        values = message.sync if message.sync is not None else {}
+        if set(values) != set(targets):
+            raise TreezeRuntimeError('Synchronization payload does not match registered widgets.')
+        validated = [(target, target._validate_sync_value(values[target_id])) for target_id, target in targets.items()]
+
+        # Validate every value before changing any state. Acknowledging the browser
+        # values also prevents unrelated renders from echoing stale values back.
+        for target, value in validated:
+            target._apply_sync_value(value)
+            properties = {target._SYNC_PROPERTY: value}
+            if target._node is not None:
+                target._node.properties.update(properties)
+            self._patch_engine.acknowledge_properties(target.id, properties)
+
+        if message.signal is not None:
+            # Browser-bound actions already ran in the browser event handler.
+            await widget._get_signal(message.signal)._emit_async(
+                message.args, message.kwargs or {}, execute_actions=False,
             )
-
-        # Browser-bound actions already ran in the browser event handler.
-        await widget._get_signal(message.signal)._emit_async(
-            message.args,
-            message.kwargs or {},
-            execute_actions=False,
-        )
 
     def _queue_client_action(self, action: ClientAction) -> None:
         if self.closed:
@@ -300,17 +331,36 @@ class Session:
 
     def _index_widgets(self) -> None:
         """Walk all widgets of the app and store them on self for reference"""
+        previous = self._widgets
         self._widgets = {}
 
         for widget in self.window._walk_widgets():
             widget._set_session(self)
             self._widgets[widget.id] = widget
 
+        for widget_id, widget in previous.items():
+            if self._widgets.get(widget_id) is not widget:
+                widget._clear_sync_registrations()
+                widget._set_session(None)
+                self._dirty_widgets.discard(widget)
+        for widget in self._widgets.values():
+            for event in widget._sync_targets:
+                targets = widget._active_sync_targets(event)
+                binding = widget._node.events.get(event) if widget._node is not None else None
+                expected = {target.id: target._SYNC_PROPERTY for target in targets.values()}
+                if expected != (binding.sync if binding is not None else {}):
+                    widget._mark_dirty()
+
     def _close(self) -> None:
         """Close the session and release pending outgoing updates."""
         if self.closed:
             return
         self._closed = True
+        for widget in tuple(self._widgets.values()):
+            widget._clear_sync_registrations()
+            widget._set_session(None)
+        self._widgets.clear()
+        self._dirty_widgets.clear()
         self._pending_actions.clear()
         self._cookie_operations.clear()
         while not self._outgoing.empty():

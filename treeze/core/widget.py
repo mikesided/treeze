@@ -12,8 +12,10 @@ from typing import Any, ClassVar, TYPE_CHECKING
 from abc import ABC, ABCMeta, abstractmethod
 from itertools import count
 from math import isfinite
+from weakref import WeakKeyDictionary, WeakSet
 
-from .enums import Color, Orientation, SizePolicy, Variant
+from .enums import BrowserEvent, Color, Orientation, SizePolicy, Variant
+from .events import EventBinding
 from .exceptions import TreezeValueError, TreezeRuntimeError, TreezeTypeError
 from .signals import BoundSignal, Signal
 from .client_action import ClientAction
@@ -101,6 +103,7 @@ class Widget(ABC, metaclass=_WidgetMeta):
     # BEHAVIOR
     _CHILDHOST: bool = False  # Can this widget host children?
     _ORIENTATION: Orientation | None = None  # Orientation forced by this widget (mostly used by layouts)
+    _SYNC_PROPERTY: ClassVar[str | None] = None
 
     # SIGNALS
     parent_changed = Signal(object, object)  # (Old parent container widget, New parent container widget)
@@ -180,6 +183,8 @@ class Widget(ABC, metaclass=_WidgetMeta):
         self._dirty: bool = False
         
         self._signals: dict[str, BoundSignal] = {}
+        self._sync_targets: dict[BrowserEvent, WeakSet[Widget]] = {}
+        self._sync_triggers: WeakKeyDictionary[Widget, set[BrowserEvent]] = WeakKeyDictionary()
         self._container_orientation: Orientation | None = None  # Maintained by `_set_parent`: holds the container's orientation
         self._composite_classes: list[str] = []
         self._extra_classes: list[str] = []  # Holds user-defined classes
@@ -678,6 +683,81 @@ class Widget(ABC, metaclass=_WidgetMeta):
     def _set_session(self, session: Session | None = None) -> None:
         self._session = session
 
+    def sync_on(self, *triggers: Signal | BoundSignal | BrowserEvent) -> None:
+        """Synchronize this widget's browser value before a trigger's callbacks."""
+        if self._SYNC_PROPERTY is None:
+            raise TreezeRuntimeError(f'{type(self).__name__} does not support synchronization.')
+        if not triggers:
+            raise TreezeValueError('Widget.sync_on(): provide at least one browser event or signal.')
+        registrations = set()
+        for trigger in triggers:
+            owner = self
+            if isinstance(trigger, BrowserEvent):
+                events = (trigger,)
+            else:
+                if isinstance(trigger, Signal):
+                    names = [name for name, signal in self._declared_signals().items() if signal is trigger]
+                    if not names:
+                        raise TreezeValueError('Widget.sync_on(): unbound signal does not belong to this widget.')
+                    trigger = self._get_signal(names[0])
+                if not isinstance(trigger, BoundSignal) or not isinstance(trigger.owner, Widget):
+                    raise TreezeTypeError('Widget.sync_on(): expected a BrowserEvent or browser-backed signal.')
+                owner = trigger.owner
+                events = tuple(event for event, binding in owner._render().events.items() if binding.signal == trigger.name)
+                if not events:
+                    raise TreezeValueError(f'Widget.sync_on(): signal {trigger.name!r} is not browser-backed.')
+            for widget in (self, owner):
+                if widget._session is not None and widget._session.closed:
+                    raise TreezeRuntimeError('Cannot register synchronization on a closed session.')
+            if self._session is not None and owner._session is not None and self._session is not owner._session:
+                raise TreezeValueError('Synchronization widgets must belong to the same session.')
+            registrations.update((owner, event) for event in events)
+        for owner, event in registrations:
+            targets = owner._sync_targets.setdefault(event, WeakSet())
+            if self not in targets:
+                targets.add(self)
+                self._sync_triggers.setdefault(owner, set()).add(event)
+                owner._mark_dirty()
+
+    def _is_enabled_in_tree(self) -> bool:
+        owner = self
+        while owner is not None:
+            if not owner.enabled:
+                return False
+            owner = owner.parent
+        return True
+
+    def _active_sync_targets(self, event: BrowserEvent) -> dict[str, Widget]:
+        session = self._session
+        if session is None or session.closed or session._widgets.get(self.id) is not self:
+            return {}
+        return {
+            target.id: target for target in self._sync_targets.get(event, ())
+            if target._session is session and session._widgets.get(target.id) is target
+            and target._is_enabled_in_tree()
+        }
+
+    def _clear_sync_registrations(self) -> None:
+        for owner, events in tuple(self._sync_triggers.items()):
+            for event in events:
+                owner._sync_targets[event].discard(self)
+            owner._mark_dirty()
+        for event, targets in self._sync_targets.items():
+            for target in tuple(targets):
+                events = target._sync_triggers.get(self)
+                if events is not None:
+                    events.discard(event)
+                    if not events:
+                        del target._sync_triggers[self]
+        self._sync_triggers.clear()
+        self._sync_targets.clear()
+
+    def _validate_sync_value(self, value: Any) -> Any:
+        raise TreezeRuntimeError(f'{type(self).__name__} does not support synchronization.')
+
+    def _apply_sync_value(self, value: Any) -> None:
+        raise TreezeRuntimeError(f'{type(self).__name__} does not support synchronization.')
+
     def _mark_dirty(self) -> None:
         if getattr(self, '_suspend_dirty_tracking', False):
             return
@@ -957,18 +1037,24 @@ class Widget(ABC, metaclass=_WidgetMeta):
             
         self._node = self._render()
 
+        for browser_event in self._sync_targets:
+            if self._active_sync_targets(browser_event):
+                self._node.events.setdefault(browser_event, EventBinding())
+
         for browser_event, binding in tuple(self._node.events.items()):
+            targets = self._active_sync_targets(browser_event)
             if binding.signal is not None:
                 signal = self._get_signal(binding.signal)
                 binding = replace(
                     binding,
-                    signal=binding.signal if signal.has_callbacks() else None,
+                    signal=binding.signal if signal.has_callbacks() or targets else None,
                     actions=(*binding.actions, *signal.actions),
                 )
-                if binding.signal is None and not binding.actions:
-                    del self._node.events[browser_event]
-                else:
-                    self._node.events[browser_event] = binding
+            binding = replace(binding, sync={target.id: target._SYNC_PROPERTY for target in targets.values()})
+            if binding.signal is None and not binding.actions and not binding.sync:
+                del self._node.events[browser_event]
+            else:
+                self._node.events[browser_event] = binding
 
         return self._node
 

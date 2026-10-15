@@ -29,6 +29,12 @@ class PatchEngine:
         self._positions.clear()
         self._nodes = self._index_tree(root.serialize())
 
+    def acknowledge_properties(self, widget_id: str, properties: dict[str, Any]) -> None:
+        """Advance the snapshot for values already present in the browser."""
+        node = self._nodes.get(widget_id)
+        if node is not None:
+            node.setdefault('properties', {}).update(properties)
+
     def create_patches_for_dirty_widgets(
         self,
         dirty_widgets: set[Widget],

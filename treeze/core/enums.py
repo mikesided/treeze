@@ -19,6 +19,7 @@ class ButtonStyle(StrEnum):
 class BrowserEvent(StrEnum):
     CLICK = 'click'
     INPUT = 'input'
+    CHANGE = 'change'
     EDITING_FINISHED = 'editing_finished'
     RETURN_PRESSED = 'return_pressed'
 
@@ -266,6 +267,7 @@ class Orientation(StrEnum):
     VERTICAL = 'vertical'
 
 class PatchOp(StrEnum):
+    SET_EVENTS = 'set_events'
     """Maps patches to client.js implementation"""
     REPLACE_NODE = 'replace_node'
     REMOVE_NODE = 'remove_node'
