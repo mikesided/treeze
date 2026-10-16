@@ -26,7 +26,7 @@ from ..client.index import render_index
 from ..core.exceptions import TreezeError
 
 from .connection import ConnectionContext
-from .security import is_same_origin_websocket
+from .security import is_origin_allowed
 
 if TYPE_CHECKING:
     from .session import Session
@@ -95,7 +95,8 @@ def create_asgi_app(app: App) -> FastAPI:
                 await ws.send_json(message)
 
         try:
-            if not is_same_origin_websocket(ws.headers):
+            origin = ws.headers.get('origin')
+            if not is_origin_allowed(origin, app.allowed_origins):
                 await ws.close(code=1008)
                 return
             
@@ -103,7 +104,6 @@ def create_asgi_app(app: App) -> FastAPI:
             if app.session_initializer is not None:
                 await app.session_initializer(connection)
 
-            origin = ws.headers['origin']
             session = app._create_session(state=connection.state, origin=origin)
         
             node_tree = session._build()
@@ -186,13 +186,9 @@ def create_asgi_app(app: App) -> FastAPI:
         if session is None or session.closed:
             raise HTTPException(status_code=404, detail='Unknown session.')
         
-        # Reject cross-origin requests
+        # Cookie operations remain bound to the origin that created this session.
         if (not session._origin or request.headers.get('origin') != session._origin):
             raise HTTPException(status_code=403, detail='Invalid request origin.')
-
-        fetch_site = request.headers.get('sec-fetch-site')
-        if fetch_site is not None and fetch_site != 'same-origin':
-            raise HTTPException(status_code=403, detail='Cross-origin request rejected.')
 
         header = session._consume_cookie_operation(payload.operation_id)
         if header is None:

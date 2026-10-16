@@ -50,7 +50,7 @@ class App(Server):
         self._sessions: SessionManager = SessionManager(self)
         self._session_initializer: (Callable[[ConnectionContext], Awaitable[None]] | None) = None
         self._network_simulator: NetworkSimulator | None = None
-        self._allowed_origins: list[str] | None = None
+        self._allowed_origins: tuple[str, ...] | None = None
 
         self.theme_preset = theme_preset
         self.window = window
@@ -125,6 +125,7 @@ class App(Server):
 
     @property
     def allowed_origins(self) -> tuple[str, ...] | None:
+        """Allowed browser origins. None allows all; an empty collection allows none."""
         return self._allowed_origins
 
     @allowed_origins.setter
