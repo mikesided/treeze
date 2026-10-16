@@ -106,7 +106,7 @@ def create_asgi_app(app: App) -> FastAPI:
 
             session = app._create_session(state=connection.state, origin=origin)
         
-            node_tree = session._build()
+            node_tree = await session._build()
 
             await ws.accept(headers=connection._accept_headers())
 
@@ -123,12 +123,12 @@ def create_asgi_app(app: App) -> FastAPI:
                     await simulated_send(await session._outgoing.get())
 
             sender = asyncio.create_task(send_updates())
+            session._start()
 
             while True:
                 client_message = await simulated_receive()
                 try:
-                    patches = await session._handle_message(client_message)
-                    session._publish_update(patches)
+                    await session._handle_message(client_message)
                 except TreezeError as error:
                     session._pending_actions.clear()
                     print(traceback.format_exc())

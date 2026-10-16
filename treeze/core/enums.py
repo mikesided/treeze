@@ -225,6 +225,10 @@ class ImageStyle(StrEnum):
     FILL = 'fill'
     FIXED = 'fixed'
 
+class InitMode(Enum):
+    SYNCHRONOUS = 'synchronous'
+    ASYNCHRONOUS = 'asynchronous'
+
 class InsertPosition(StrEnum):
     FIRST = 'first'
     LAST = 'last'

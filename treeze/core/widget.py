@@ -14,7 +14,7 @@ from itertools import count
 from math import isfinite
 from weakref import WeakKeyDictionary, WeakSet
 
-from .enums import BrowserEvent, Color, Orientation, SizePolicy, Variant
+from .enums import BrowserEvent, Color, InitMode, Orientation, SizePolicy, Variant
 from .events import EventBinding
 from .exceptions import TreezeValueError, TreezeRuntimeError, TreezeTypeError
 from .signals import BoundSignal, Signal
@@ -42,9 +42,11 @@ _widget_id_counter = count(1)
 class _WidgetMeta(ABCMeta):
     def __call__(cls, *args: Any, **kwargs: Any):
         widget = super().__call__(*args, **kwargs)
+        widget._init_ready = True
         parent = widget.__dict__.pop('_pending_parent', None)
         if parent is not None and parent._CHILDHOST is True:
             parent._add_widget(widget)
+        widget._schedule_init()
         return widget
 
 
@@ -58,7 +60,7 @@ class Widget(ABC, metaclass=_WidgetMeta):
     NOTE: Dirty tracking
     |   
     |    Treeze uses dirty tracking to decide which widgets need to be re-rendered
-    |   after a signal mutates Python widget state.
+    |   after a signal or initialization hook mutates Python widget state.
     |
     |   Convention:
     |    - Public attributes are treated as render-affecting state. Changing them marks
@@ -76,9 +78,9 @@ class Widget(ABC, metaclass=_WidgetMeta):
     |    _mark_dirty() themselves.
     |    Example: add_widget(), remove_widget(), add_class(), remove_class().
     |
-    |    Dirty widgets are collected by the active Session. After a client signal is
-    |    handled, the runtime rebuilds/diffs only those dirty widgets and sends the
-    |    resulting patches to the browser.
+    |    Dirty widgets are collected by the active Session. The runtime schedules
+    |    updates, rebuilds/diffs only those dirty widgets, and sends the resulting
+    |    patches to the browser. Client callbacks finish before their update runs.
     |
     |    During initial widget construction, widgets usually have no active session yet.
     |    Dirty marks at that stage are harmless: they affect the initial render, not a
@@ -110,6 +112,9 @@ class Widget(ABC, metaclass=_WidgetMeta):
     visibility_changed = Signal(bool)  # (isVisible?)
     collapsed_changed = Signal(bool)  # (isCollapsed?)
     enabled_changed = Signal(bool)  # (isEnabled?)
+
+    # PUBLIC
+    INIT_MODE = InitMode.ASYNCHRONOUS
 
     def __init__(
         self, 
@@ -157,16 +162,25 @@ class Widget(ABC, metaclass=_WidgetMeta):
         classes: list[str] | None = None,
         parent: Container | None = None,
         p: Container | None = None,  # Short code
+
+        # Framework
+        init_mode: InitMode | None = None,
     ):
         # Establish ownership before setters run, without tracking partial initialization.
         object.__setattr__(self, '_suspend_dirty_tracking', True)
         session = get_current_session()
-        initial_parent = parent if parent is not None else p
-        if session is None and isinstance(initial_parent, Widget):
-            session = initial_parent._session
         if session is not None and session.closed:
             raise TreezeRuntimeError('Cannot create widgets in a closed session.')
         object.__setattr__(self, '_session', session)
+
+        # Setup on_init
+        self._init_ready = False
+        self._init_started = False
+        self._init_task = None
+        if init_mode is not None:
+            self._init_mode = Validator.ensure(init_mode, InitMode, attr_name='Widget(init_mode=...)')
+        else:
+            self._init_mode = Validator.ensure(type(self).INIT_MODE, InitMode, attr_name='Widget.INIT_MODE')
 
         for name, value in (('horizontal_size_policy', horizontal_size_policy),
                             ('vertical_size_policy', vertical_size_policy), ('hsp', hsp), ('vsp', vsp)):
@@ -303,6 +317,11 @@ class Widget(ABC, metaclass=_WidgetMeta):
     def id(self) -> str:
         """Read only. The widget's internal ID"""
         return self._id
+
+    @property
+    def init_mode(self) -> InitMode:
+        """Read only. Returns the widget's init mode"""
+        return self._init_mode
     
     @property
     def _is_dirty(self) -> bool:
@@ -625,6 +644,10 @@ class Widget(ABC, metaclass=_WidgetMeta):
     #  Public API
     # ==========================================================================
 
+    async def on_init(self) -> None:
+        """Initialize this widget once, after its complete constructor finishes."""
+        pass
+
     def execute(self, action: ClientAction) -> None:
         """Queue a one-time browser action on this widget"""
         if self._session is None:
@@ -739,6 +762,16 @@ class Widget(ABC, metaclass=_WidgetMeta):
         self._validate_session(session)
         if self._session is None:
             self._session = session
+            self._schedule_init()
+
+    def _schedule_init(self) -> None:
+        """Schedule once after construction, deferring only until a session exists."""
+        if not self._init_ready or self._init_started:
+            return
+        if type(self).on_init is Widget.on_init:
+            self._init_started = True
+        elif self._session is not None:
+            self._session._initialize_widget(self)
 
     def sync_on(self, *triggers: Signal | BoundSignal | BrowserEvent) -> None:
         """Synchronize this widget's browser value before a trigger's callbacks."""

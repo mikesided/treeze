@@ -20,6 +20,7 @@ from .enums import (
     EchoMode,
     EventData,
     ImageStyle,
+    InitMode,
     InsertPosition,
     LabelStyle,
     LayoutAlignment,

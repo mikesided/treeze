@@ -8,18 +8,21 @@ Description:  Runtime session for one connected browser
 from __future__ import annotations
 import asyncio
 from datetime import datetime, timezone
+from functools import partial
 from typing import Any, TYPE_CHECKING
+from weakref import WeakSet, finalize, ref
 import uuid
 import secrets
 import time
+import traceback
 
 from starlette.responses import Response
 
 from .patch_engine import PatchEngine
-from .protocol import ClientSignalMessage, ServerActionsMessage, ServerPatchesMessage, ServerCookieMessage
+from .protocol import ClientSignalMessage, ServerDialogMessage, ServerPatchesMessage, ServerCookieMessage
 
 from ..core.exceptions import TreezeError, TreezeRuntimeError
-from ..core.enums import BrowserEvent
+from ..core.enums import BrowserEvent, InitMode
 from ..core.node import Node
 from ..core.client_action import ClientAction
 from ..core.validation import Validator
@@ -81,8 +84,14 @@ class Session:
         self._outgoing: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
         self._pending_actions: list[dict[str, Any]] = []
         self._cookie_operations: dict[str, tuple[float, bytes]] = {}
-        self._handling_message = False
         self._message_lock = asyncio.Lock()
+        self._window: Window | None = None
+        self._pending_inits: WeakSet[Widget] = WeakSet()
+        self._init_tasks: set[asyncio.Task] = set()
+        self._sync_init_tasks: set[asyncio.Task] = set()
+        self._init_changed = asyncio.Event()
+        self._published = False
+        self._update_task: asyncio.Task | None = None
 
         self.id_scope = create_id_scope()
 
@@ -90,6 +99,7 @@ class Session:
             # Session contains one main initialized window (generated from the app)
             self._window = app._create_window()
             self._register_subtree(self._window)
+            self._start_initializations()
 
     # ==========================================================================
     #  Properties
@@ -145,12 +155,15 @@ class Session:
     #  Internal Methods
     # ==========================================================================
 
-    def _build(self) -> Node:
+    async def _build(self) -> Node:
         """Build this session's current node tree."""
         if self.closed:
             raise TreezeRuntimeError('Cannot build a closed session.')
 
         with use_session(self):
+            await self._wait_for_initialization()
+            if self.closed:
+                raise TreezeRuntimeError('Cannot build a closed session.')
             processed_widgets = self._dirty_widgets
             self._dirty_widgets = set()
             try:
@@ -163,8 +176,8 @@ class Session:
 
         return node_tree
 
-    async def _handle_message(self, message: dict[str, Any]) -> list[dict[str, Any]]:
-        """Await a client's callbacks in session context and return its UI patches."""
+    async def _handle_message(self, message: dict[str, Any]) -> None:
+        """Await a client's callbacks; dirty changes schedule their own updates."""
         message = Validator.ensure(message, dict, attr_name='Session._handle_message(message=...)')
         message_type = Validator.ensure(message.get('type'), str, attr_name='client.signal.type')
         payload = Validator.ensure(message.get('payload'), dict, attr_name='client.signal.payload')
@@ -177,25 +190,112 @@ class Session:
                 if message_type != 'client.signal':
                     raise TreezeRuntimeError(f'Unsupported client message type: {message_type!r}.')
                 signal_message = ClientSignalMessage.from_payload(payload)
-                self._handling_message = True
                 try:
                     await self._handle_signal_message(signal_message)
                 except BaseException:
                     self._pending_actions.clear()
                     raise
-                finally:
-                    self._handling_message = False
 
-                processed_widgets = self._dirty_widgets
-                self._dirty_widgets = set()
-                try:
-                    patches = self._patch_engine.create_patches_for_dirty_widgets(processed_widgets)
-                except BaseException:
-                    self._dirty_widgets.update(processed_widgets)
-                    self._pending_actions.clear()
-                    raise
-                self._clear_dirty_state(processed_widgets)
-                return patches
+    def _initialize_widget(self, widget: Widget) -> None:
+        """Schedule construction's one-time hook, including for parentless widgets."""
+        widget._init_started = True
+        if self.closed:
+            return
+        self._pending_inits.add(widget)
+        if self._window is not None:
+            self._start_initializations()
+
+    def _start_initializations(self) -> None:
+        if not self._pending_inits:
+            return
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            # Sessions constructed outside the event loop start hooks at _build().
+            return
+        for widget in tuple(self._pending_inits):
+            self._pending_inits.discard(widget)
+            task = asyncio.create_task(self._run_init(ref(widget)))
+            widget._init_task = task
+            self._init_tasks.add(task)
+            finalizer = finalize(widget, task.cancel)
+            task.add_done_callback(partial(self._finish_init, finalizer=finalizer))
+            if widget.init_mode is InitMode.SYNCHRONOUS and self._widgets.get(widget.id) is widget:
+                self._sync_init_tasks.add(task)
+
+    async def _run_init(self, widget_ref: ref[Widget]) -> None:
+        widget = widget_ref()
+        if widget is None:
+            return
+        with use_session(self):
+            try:
+                await widget.on_init()
+            except Exception as error:
+                self._report_error(error)
+            finally:
+                widget._init_task = None
+
+    def _finish_init(self, task: asyncio.Task, *, finalizer: finalize) -> None:
+        finalizer.detach()
+        self._init_tasks.discard(task)
+        if task in self._sync_init_tasks:
+            self._sync_init_tasks.remove(task)
+            self._init_changed.set()
+
+    async def _wait_for_initialization(self) -> None:
+        """Only unfinished synchronous initializers in the published tree can delay it."""
+        self._start_initializations()
+        while self._sync_init_tasks:
+            self._init_changed.clear()
+            await self._init_changed.wait()
+
+    def _start(self) -> None:
+        """Allow patches only after the initial render has been sent."""
+        self._published = True
+        self._publish_update([])
+        if self._dirty_widgets:
+            self._request_update()
+
+    def _request_update(self) -> None:
+        if self.closed or not self._published or self._update_task is not None:
+            return
+        self._update_task = asyncio.create_task(self._flush_updates())
+
+    async def _flush_updates(self) -> None:
+        try:
+            async with self._message_lock:
+                with use_session(self):
+                    await self._wait_for_initialization()
+                    if self.closed:
+                        return
+                    processed_widgets = self._dirty_widgets
+                    self._dirty_widgets = set()
+                    try:
+                        patches = self._patch_engine.create_patches_for_dirty_widgets(processed_widgets)
+                    except BaseException:
+                        self._dirty_widgets.update(processed_widgets)
+                        raise
+                    self._clear_dirty_state(processed_widgets)
+                    self._publish_update(patches)
+        except Exception as error:
+            self._pending_actions.clear()
+            self._report_error(error)
+            return
+        finally:
+            self._update_task = None
+        if self._dirty_widgets:
+            self._request_update()
+
+    def _report_error(self, error: Exception) -> None:
+        """Report background failures through the existing error dialog protocol."""
+        print(traceback.format_exc())
+        if not self.closed:
+            self._outgoing.put_nowait(ServerDialogMessage(
+                level='error',
+                title=type(error).__name__ if isinstance(error, TreezeError) else 'Internal Treeze Error',
+                message=str(error) if isinstance(error, TreezeError) else 'Treeze hit an internal error. Check the server logs.',
+                details=None if isinstance(error, TreezeError) else str(error),
+            ).to_protocol_message().to_dict())
 
     async def _handle_signal_message(self, message: ClientSignalMessage) -> None:
         widget = self._widgets.get(message.widget_id)
@@ -260,12 +360,8 @@ class Session:
         if self.closed:
             raise TreezeRuntimeError('Cannot execute a client action on a closed session.')
         payload = action.serialize()
-        if self._handling_message:
-            self._pending_actions.append(payload)
-        else:
-            self._outgoing.put_nowait(
-                ServerActionsMessage(actions=(payload,)).to_protocol_message().to_dict()
-            )
+        self._pending_actions.append(payload)
+        self._request_update()
 
     def _publish_update(self, patches: list[dict[str, Any]]) -> None:
         """Send patches and their one-time actions together, in execution order."""
@@ -334,6 +430,9 @@ class Session:
             self._widgets[widget.id] = widget
             if widget._is_dirty:
                 self._dirty_widgets.add(widget)
+            task = widget._init_task
+            if widget.init_mode is InitMode.SYNCHRONOUS and task is not None and not task.done():
+                self._sync_init_tasks.add(task)
         for widget in widgets:
             for source in widget._sync_triggers:
                 source._mark_dirty()
@@ -343,6 +442,10 @@ class Session:
         for widget in widgets:
             self._widgets.pop(widget.id, None)
             self._dirty_widgets.discard(widget)
+            task = widget._init_task
+            if task in self._sync_init_tasks:
+                self._sync_init_tasks.remove(task)
+                self._init_changed.set()
         for widget in widgets:
             for source in widget._sync_triggers:
                 source._mark_dirty()
@@ -352,6 +455,14 @@ class Session:
         if self.closed:
             return
         self._closed = True
+        if self._update_task is not None:
+            self._update_task.cancel()
+        for task in self._init_tasks:
+            task.cancel()
+        self._init_tasks.clear()
+        self._sync_init_tasks.clear()
+        self._pending_inits.clear()
+        self._init_changed.set()
         self._widgets.clear()
         self._window = None
         self._patch_engine = PatchEngine()
@@ -366,6 +477,7 @@ class Session:
             return
 
         self._dirty_widgets.add(widget)
+        self._request_update()
 
     def _clear_dirty_state(self, processed_widgets: set[Widget]) -> None:
         """Clean the completed batch without discarding changes made during rendering."""
