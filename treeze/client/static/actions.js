@@ -1,6 +1,7 @@
 const actionHandlers = new Map([
     ['open_url', executeOpenUrl],
     ['reconnect', executeReconnect],
+    ['reload_page', executeReloadPage],
     ['emit_signal', executeEmitSignal],
 ]);
 
@@ -43,6 +44,11 @@ function executeReconnect(action) {
             query_params: action.query_params ?? {},
         },
     }));
+}
+
+
+function executeReloadPage() {
+    window.location.reload();
 }
 
 
