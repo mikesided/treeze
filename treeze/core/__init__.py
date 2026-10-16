@@ -10,6 +10,7 @@ from .signals import Signal
 from .widget import Widget
 from .client_action import ClientAction
 from ..runtime.connection import ConnectionContext
+from ..runtime.network_simulator import NetworkSimulator
 
 from .enums import (
     BrowserEvent,
