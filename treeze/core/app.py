@@ -15,6 +15,7 @@ from typing import Any
 
 from ..runtime.session import SessionManager
 from ..runtime.connection import ConnectionContext
+from ..runtime.network_simulator import NetworkSimulator
 from ..widgets.primitives.window import Window, _allow_window_construction
 
 from .enums import TreezeTheme
@@ -48,6 +49,7 @@ class App(Server):
         self._resources: dict[str] = {'resources': 'resources'}
         self._sessions: SessionManager = SessionManager(self)
         self._session_initializer: (Callable[[ConnectionContext], Awaitable[None]] | None) = None
+        self._network_simulator: NetworkSimulator | None = None
         self._allowed_origins: list[str] | None = None
 
         self.theme_preset = theme_preset
@@ -110,6 +112,16 @@ class App(Server):
             raise TreezeTypeError('App.session_initializer must be callable or None.')
 
         self._session_initializer = initializer
+
+    @property
+    def network_simulator(self) -> NetworkSimulator | None:
+        return self._network_simulator
+
+    @network_simulator.setter
+    def network_simulator(self, network_simulator: NetworkSimulator | None) -> None:
+        self._network_simulator = Validator.ensure(
+            network_simulator, NetworkSimulator, None, attr_name='App.network_simulator'
+        )
 
     @property
     def allowed_origins(self) -> tuple[str, ...] | None:

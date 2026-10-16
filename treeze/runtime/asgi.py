@@ -77,6 +77,23 @@ def create_asgi_app(app: App) -> FastAPI:
         sender: asyncio.Task | None = None
         accepted = False
 
+        simulator = app.network_simulator
+        send_lock = asyncio.Lock()
+
+        async def simulated_receive():
+            message = await ws.receive_json()
+            if simulator is not None:
+                await simulator.delay_one_way()
+
+            return message
+
+        async def simulated_send(message):
+            async with send_lock:
+                if simulator is not None:
+                    await simulator.delay_one_way()
+
+                await ws.send_json(message)
+
         try:
             if not is_same_origin_websocket(ws.headers):
                 await ws.close(code=1008)
@@ -95,7 +112,7 @@ def create_asgi_app(app: App) -> FastAPI:
 
             accepted = True
 
-            await ws.send_json(
+            await simulated_send(
                 ServerRenderMessage(
                     root=node_tree.serialize(),
                 ).to_protocol_message().to_dict()
@@ -103,19 +120,19 @@ def create_asgi_app(app: App) -> FastAPI:
 
             async def send_updates():
                 while True:
-                    await ws.send_json(await session._outgoing.get())
+                    await simulated_send(await session._outgoing.get())
 
             sender = asyncio.create_task(send_updates())
 
             while True:
-                client_message = await ws.receive_json()
+                client_message = await simulated_receive()
                 try:
                     patches = await session._handle_message(client_message)
                     session._publish_update(patches)
                 except TreezeError as error:
                     session._pending_actions.clear()
                     print(traceback.format_exc())
-                    await ws.send_json(ServerDialogMessage(
+                    await simulated_send(ServerDialogMessage(
                         level='error', title=type(error).__name__, message=str(error),
                     ).to_protocol_message().to_dict())
 
@@ -126,7 +143,7 @@ def create_asgi_app(app: App) -> FastAPI:
             print(traceback.format_exc())
 
             if accepted:
-                await ws.send_json(
+                await simulated_send(
                     ServerDialogMessage(
                         level='error',
                         title=type(error).__name__,
@@ -140,7 +157,7 @@ def create_asgi_app(app: App) -> FastAPI:
             print(traceback.format_exc())
 
             if accepted:
-                await ws.send_json(
+                await simulated_send(
                     ServerDialogMessage(
                         level='error',
                         title='Internal Treeze Error',
