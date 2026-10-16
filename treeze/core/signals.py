@@ -10,13 +10,14 @@ from __future__ import annotations
 import inspect
 from types import UnionType
 from collections.abc import Callable
-from typing import Any, Protocol, Union, get_args, overload, TYPE_CHECKING
+from typing import Any, Union, get_args, overload, TYPE_CHECKING
 
 from .client_action import ClientAction
 from .exceptions import TreezeRuntimeError, TreezeTypeError
 from .validation import Validator
 
 if TYPE_CHECKING:
+    from .object import Object
     from .widget import Widget
 
 
@@ -36,17 +37,6 @@ def _validate_arg_types(arg_types: tuple[type, ...], *, attr_name: str) -> tuple
             raise TreezeTypeError(f'{name}: must support runtime type checks.') from error
     return arg_types
 
-
-class SignalOwner(Protocol):
-    """Typing helper. Not a real concept."""
-    def _get_signal(self, name: str) -> BoundSignal:
-        ...
-
-    def _mark_dirty(self) -> None:
-        ...
-
-    def execute(self, action: ClientAction) -> None:
-        ...
 
 class Signal:
     """
@@ -82,12 +72,12 @@ class Signal:
         ...
 
     @overload
-    def __get__(self, instance: SignalOwner, owner: type[Any]) -> BoundSignal:
+    def __get__(self, instance: Object, owner: type[Any]) -> BoundSignal:
         ...
 
     def __get__(
         self,
-        instance: SignalOwner | None,
+        instance: Object | None,
         owner: type[Any],
     ) -> Signal | BoundSignal:
         if instance is None:
@@ -106,13 +96,13 @@ class BoundSignal:
     """
     Instance-level signal.
 
-    This is what `widget.clicked` returns.
+    This is what accessing a signal on an Object instance returns.
     Callback lists are stored here, not on the class-level Signal.
     """
 
     def __init__(
             self, 
-            owner: SignalOwner, 
+            owner: Object,
             name: str, 
             arg_types: tuple[type, ...] = (),
         ):
@@ -123,7 +113,7 @@ class BoundSignal:
         self._actions: list[ClientAction] = []
 
     @property
-    def owner(self) -> SignalOwner:
+    def owner(self) -> Object:
         return self._owner
 
     @property
@@ -141,8 +131,9 @@ class BoundSignal:
     def bind(self, action: ClientAction) -> None:
         """Bind a browser action, independently of Python callbacks."""
         Validator.ensure(action, ClientAction, attr_name='BoundSignal.bind(action=...)')
+        self._action_owner()
         self._actions.append(action)
-        self._owner._mark_dirty()
+        self._owner._signal_changed()
 
     def unbind(self, action: ClientAction | None = None) -> None:
         """Remove one bound action, or all bound actions if None."""
@@ -156,7 +147,7 @@ class BoundSignal:
                 self._actions.remove(action)
             except ValueError:
                 raise TreezeRuntimeError(f'Action is not bound to signal {self._name!r}.') from None
-        self._owner._mark_dirty()
+        self._owner._signal_changed()
 
     @property
     def actions(self) -> tuple[ClientAction, ...]:
@@ -187,7 +178,7 @@ class BoundSignal:
 
         self._callbacks.append((callback, internal))
         if len(self._callbacks) == 1:
-            self._owner._mark_dirty()
+            self._owner._signal_changed()
 
 
     def _internal_disconnect(self, callback: Callable[..., Any] | None = None) -> None:
@@ -207,14 +198,14 @@ class BoundSignal:
                 connection for connection in self._callbacks if connection[1] != internal
             ]
             if had_callbacks and not self.has_callbacks():
-                self._owner._mark_dirty()
+                self._owner._signal_changed()
             return
 
         for index, (connected, is_internal) in enumerate(self._callbacks):
             if is_internal == internal and connected == callback:
                 del self._callbacks[index]
                 if not self.has_callbacks():
-                    self._owner._mark_dirty()
+                    self._owner._signal_changed()
                 return
 
         connection_type = 'internally' if internal else 'publicly'
@@ -246,12 +237,20 @@ class BoundSignal:
                     'Use await signal.emit_async(); setter-driven signals require synchronous callbacks.'
                 )
 
-        if execute_actions:
+        if execute_actions and actions:
+            owner = self._action_owner()
             for action in actions:
-                self._owner.execute(action)
+                owner.execute(action)
 
     def has_connections(self) -> bool:
         return bool(self._callbacks or self._actions)
+
+    def _action_owner(self) -> Widget:
+        from .widget import Widget
+
+        if not isinstance(self._owner, Widget):
+            raise TreezeRuntimeError('Client actions can only be bound to widget signals.')
+        return self._owner
 
     async def _emit_async(
         self, args: tuple[Any, ...], kwargs: dict[str, Any], *, execute_actions: bool,
@@ -267,9 +266,10 @@ class BoundSignal:
             if inspect.isawaitable(result):
                 await result
 
-        if execute_actions:
+        if execute_actions and actions:
+            owner = self._action_owner()
             for action in actions:
-                self._owner.execute(action)
+                owner.execute(action)
     
     def _validate_emit_arguments(
             self,

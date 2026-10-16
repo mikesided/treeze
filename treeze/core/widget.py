@@ -17,6 +17,7 @@ from weakref import WeakKeyDictionary, WeakSet
 from .enums import BrowserEvent, Color, InitMode, Orientation, SizePolicy, Variant
 from .events import EventBinding
 from .exceptions import TreezeValueError, TreezeRuntimeError, TreezeTypeError
+from .object import Object
 from .signals import BoundSignal, Signal
 from .client_action import ClientAction
 from .types.size import Size
@@ -50,7 +51,7 @@ class _WidgetMeta(ABCMeta):
         return widget
 
 
-class Widget(ABC, metaclass=_WidgetMeta):
+class Widget(Object, ABC, metaclass=_WidgetMeta):
     """
     Base class for Widget.
     
@@ -203,7 +204,6 @@ class Widget(ABC, metaclass=_WidgetMeta):
         self._node: Node | None = None
         self._dirty: bool = False
         
-        self._signals: dict[str, BoundSignal] = {}
         self._sync_targets: dict[BrowserEvent, WeakSet[Widget]] = {}
         self._sync_triggers: WeakKeyDictionary[Widget, set[BrowserEvent]] = WeakKeyDictionary()
         self._sync_dependents: WeakSet[Widget] = WeakSet()  # Sync targets affected by this ancestor's enabled state
@@ -241,9 +241,7 @@ class Widget(ABC, metaclass=_WidgetMeta):
         self._collapsed: bool = False
         self._enabled: bool = True
 
-        # Create signals
-        for signal_name, signal in type(self)._declared_signals().items():
-            self._create_signal(signal_name, signal.arg_types)
+        super().__init__()
 
         # Assign framework properties
         self.variant = variant
@@ -326,10 +324,6 @@ class Widget(ABC, metaclass=_WidgetMeta):
     @property
     def _is_dirty(self) -> bool:
         return self._dirty
-    
-    @property
-    def signals(self) -> tuple[BoundSignal, ...]:
-        return tuple(self._signals.values())
     
     @property
     def variant(self) -> Variant:
@@ -855,87 +849,8 @@ class Widget(ABC, metaclass=_WidgetMeta):
     #  Signals
     # ==========================================================================
 
-    def _assign_dynamic_signal(self, name: str, signal: Signal) -> BoundSignal:
-        if '_signals' not in self.__dict__:
-            raise TreezeRuntimeError(f'Cannot assign signal {name!r} before Widget.__init__() has run.')
-
-        if name.startswith('_'):
-            raise TreezeRuntimeError(f'Signal name {name!r} cannot start with an underscore.')
-
-        if name in type(self)._declared_signals():
-            raise TreezeRuntimeError(
-                f'{type(self).__name__} already has a declared signal named '
-                f'{name!r}. Use self.{name}.connect(...) instead.'
-            )
-
-        if name in self._signals:
-            raise TreezeRuntimeError(
-                f'{type(self).__name__} already has a signal named {name!r}.'
-            )
-
-        if name in self.__dict__:
-            raise TreezeRuntimeError(
-                f'{type(self).__name__} already has an instance attribute named '
-                f'{name!r}.'
-            )
-
-        if hasattr(type(self), name):
-            raise TreezeRuntimeError(
-                f'{type(self).__name__} already has a class attribute named '
-                f'{name!r}.'
-            )
-
-        signal._bind_name(name)
-
-        bound_signal = self._create_signal(name, signal.arg_types)
-
-        super().__setattr__(name, bound_signal)
-
-        return bound_signal
-
-    def _create_signal(self, name: str, arg_types: tuple[type, ...] = ()) -> BoundSignal:
-        existing = self._signals.get(name)
-
-        if existing is not None:
-            raise TreezeRuntimeError(f'{type(self).__name__} already has a signal named {name!r}.')
-
-        signal = BoundSignal(self, name, arg_types)
-        self._signals[name] = signal
-
-        return signal
-        
-    def _get_signal(self, name: str) -> BoundSignal:
-        signal = self._signals.get(name)
-
-        if signal is None:
-            raise TreezeRuntimeError(f'{type(self).__name__} has no signal named {name!r}.')
-
-        return signal
-    
-    def _has_signal(self, name: str) -> bool:
-        return name in self._signals
-
-    def _emit_signal(self, name: str, *args: Any, **kwargs: Any) -> None:
-        declared_signal = self._declared_signals().get(name)
-
-        if declared_signal is None:
-            raise TreezeRuntimeError(
-                f'Widget {type(self).__name__!r} has no signal named {name!r}.'
-            )
-
-        self._get_signal(name).emit(*args, **kwargs)
-
-    @classmethod
-    def _declared_signals(cls) -> dict[str, Signal]:
-        """Returns any declared signals on the class"""
-        signals: dict[str, Signal] = {}
-
-        for base in reversed(cls.__mro__):
-            for name, value in base.__dict__.items():
-                if isinstance(value, Signal):
-                    signals[name] = value
-
-        return signals
+    def _signal_changed(self) -> None:
+        self._mark_dirty()
 
     # ==========================================================================
     #  Rendering
@@ -1177,17 +1092,6 @@ class Widget(ABC, metaclass=_WidgetMeta):
         return name in type(self)._dirty_private_attributes()
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if isinstance(value, Signal):
-            self._assign_dynamic_signal(name, value)
-
-            if self._is_dirty_attribute(name):
-                self._mark_dirty()
-
-            return
-
-        if '_signals' in self.__dict__ and self._has_signal(name):
-            raise TreezeRuntimeError(f'Signal {name!r} already connected.')
-
         try:
             old_value = object.__getattribute__(self, name)
         except AttributeError:
@@ -1195,7 +1099,7 @@ class Widget(ABC, metaclass=_WidgetMeta):
 
         super().__setattr__(name, value)
 
-        if old_value == value:
+        if isinstance(value, Signal) or old_value == value:
             return
 
         if not self._is_dirty_attribute(name):

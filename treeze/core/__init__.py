@@ -7,6 +7,7 @@ Description:  Module init file for treeze.core
 # Imports
 from .app import App
 from .signals import Signal
+from .object import Object
 from .widget import Widget
 from .client_action import ClientAction
 from ..runtime.connection import ConnectionContext
