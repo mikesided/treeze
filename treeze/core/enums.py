@@ -308,6 +308,18 @@ class TextFieldStyle(StrEnum):
     UNDERLINED = 'underlined'
     GHOST = 'ghost'
 
+class ThemeColor(StrEnum):
+    PRIMARY = 'var(--tz-color-primary)'
+    SECONDARY = 'var(--tz-color-secondary)'
+    BACKGROUND = 'var(--tz-color-background)'
+    SURFACE = 'var(--tz-color-surface)'
+    TEXT = 'var(--tz-color-text)'
+    TEXT_MUTED = 'var(--tz-color-text-muted)'
+    BORDER = 'var(--tz-color-border)'
+    SUCCESS = 'var(--tz-color-success)'
+    WARNING = 'var(--tz-color-warning)'
+    DANGER = 'var(--tz-color-danger)'
+
 class TreezeTheme(StrEnum):
     CUSTOM = 'custom'
     DARK = 'dark'

@@ -31,6 +31,7 @@ from .enums import (
     SizePolicy,
     TextAlignment,
     TextFieldStyle,
+    ThemeColor,
     TreezeTheme,
     Variant
 )
