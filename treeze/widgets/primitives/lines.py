@@ -19,8 +19,8 @@ class Line(Widget):
     """Simple widget that displays a straight line separator
     
     NOTE: 
-    To alter the line color, both `color` and `border_color` can be used,
-    although `color` will not render a gradient, while `border_color` will.
+    Use `background_color` (including gradients) or `color` to set the stroke.
+    The line is drawn using its background, without a border.
     """
 
     _STYLE_TYPE = LineStyle
@@ -63,6 +63,15 @@ class Line(Widget):
         classes = super()._classes()
         classes.append(f'tz-line-{self.orientation.value}')
         return classes
+
+    def _styles(self):
+        styles = super()._styles()
+        if 'background-color' in styles:
+            styles['background'] = styles.pop('background-color')
+        if self.color is not None and self.background_color is None:
+            styles.pop('color', None)
+            styles['background'] = str(self.color)
+        return styles
 
     def _render(self) -> Node:
         return Node(

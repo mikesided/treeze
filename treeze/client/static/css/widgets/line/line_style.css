@@ -1,15 +1,29 @@
 .tz-line-solid {
-    border-style: solid;
+    mask-image: none;
 }
 
 .tz-line-dashed {
-    border-style: dashed;
+    mask-image: repeating-linear-gradient(
+        var(--tz-line-direction), #000 0 6px, transparent 6px 10px
+    );
 }
 
 .tz-line-dotted {
-    border-style: dotted;
+    mask-image: radial-gradient(circle closest-side, #000 99%, transparent 100%);
+    mask-size: var(--tz-line-dot-size);
 }
 
 .tz-line-double {
-    border-style: double;
+    mask-image: linear-gradient(
+        var(--tz-line-cross-direction),
+        #000 0 33.333%, transparent 33.333% 66.667%, #000 66.667% 100%
+    );
+}
+
+.tz-line-horizontal.tz-line-double {
+    height: 3px;
+}
+
+.tz-line-vertical.tz-line-double {
+    width: 3px;
 }
