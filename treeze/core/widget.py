@@ -20,6 +20,7 @@ from .exceptions import TreezeValueError, TreezeRuntimeError, TreezeTypeError
 from .object import Object
 from .signals import BoundSignal, Signal
 from .client_action import ClientAction
+from .types.clamp import Clamp
 from .types.size import Size
 from .types.gradients import ConeGradient, LinearGradient, RadialGradient
 from .validation import Validator
@@ -37,6 +38,14 @@ if TYPE_CHECKING:
 # ______________________________________________________________________________________________________________________
 
 ColorValue = str | Color | ConeGradient | LinearGradient | RadialGradient
+CSSDimension = int | str | Clamp
+
+
+def css_dimension(value: CSSDimension) -> str:
+    if isinstance(value, int):
+        return f'{value}px'
+    return str(value)
+
 
 _widget_id_counter = count(1)
 
@@ -125,8 +134,8 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
         style: StrEnum | None = None,  # Default lives in cls._DEFAULT_STYLE
 
         # Spacing
-        margin: int | tuple[int, int, int, int] | None = None,
-        padding: int | tuple[int, int, int, int] | None = None,
+        margin: CSSDimension | tuple[CSSDimension, CSSDimension, CSSDimension, CSSDimension] | None = None,
+        padding: CSSDimension | tuple[CSSDimension, CSSDimension, CSSDimension, CSSDimension] | None = None,
 
         # Size Policies
         size_policy: tuple[SizePolicy, SizePolicy] = (SizePolicy.PREFERRED, SizePolicy.PREFERRED),
@@ -137,23 +146,23 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
 
         # Sizes
         minimum_size: Size | None = None,
-        minimum_width: int | None = None,
-        minimum_height: int | None = None,
+        minimum_width: CSSDimension | None = None,
+        minimum_height: CSSDimension | None = None,
         maximum_size: Size | None = None,
-        maximum_width: int | None = None,
-        maximum_height: int | None = None,
+        maximum_width: CSSDimension | None = None,
+        maximum_height: CSSDimension | None = None,
         fixed_size: Size | None = None,
-        fixed_width: int | None = None,
-        fixed_height: int | None = None,
+        fixed_width: CSSDimension | None = None,
+        fixed_height: CSSDimension | None = None,
 
         # CSS Wrappers
         color: str | Color | None = None,
         background_color: ColorValue | None = None,
         border: str | None = None,
-        border_width: int | str | None = None,
+        border_width: CSSDimension | None = None,
         border_style: str | None = None,
         border_color: ColorValue | None = None,
-        border_radius: int | str | None = None,
+        border_radius: CSSDimension | None = None,
         opacity: int | float | str | None = None,
 
         # Runtime
@@ -166,6 +175,9 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
 
         # Framework
         init_mode: InitMode | None = None,
+
+        # Typography
+        font_size: CSSDimension | None = None,
     ):
         # Establish ownership before setters run, without tracking partial initialization.
         object.__setattr__(self, '_suspend_dirty_tracking', True)
@@ -216,25 +228,26 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
         self._variant: Variant = Variant.DEFAULT
         self._style: StrEnum | None = None
 
-        self._margin: int | tuple[int, int, int, int] | None = None
-        self._padding: int | tuple[int, int, int, int] | None = None
+        self._margin: tuple[CSSDimension, CSSDimension, CSSDimension, CSSDimension] | None = None
+        self._padding: tuple[CSSDimension, CSSDimension, CSSDimension, CSSDimension] | None = None
 
         self._horizontal_size_policy: SizePolicy = SizePolicy.PREFERRED
         self._vertical_size_policy: SizePolicy = SizePolicy.PREFERRED
 
-        self._minimum_width: int | None = None
-        self._minimum_height: int | None = None
-        self._maximum_width: int | None = None
-        self._maximum_height: int | None = None
-        self._fixed_width: int | None = None
-        self._fixed_height: int | None = None
+        self._minimum_width: CSSDimension | None = None
+        self._minimum_height: CSSDimension | None = None
+        self._maximum_width: CSSDimension | None = None
+        self._maximum_height: CSSDimension | None = None
+        self._fixed_width: CSSDimension | None = None
+        self._fixed_height: CSSDimension | None = None
 
         self._color: ColorValue | None = None
+        self._font_size: CSSDimension | None = None
         self._background_color: ColorValue | None = None
-        self._border_width: int | str | None = None
+        self._border_width: CSSDimension | None = None
         self._border_style: str | None = None
         self._border_color: ColorValue | None = None
-        self._border_radius: int | str | None = None
+        self._border_radius: CSSDimension | None = None
         self._opacity: int | float | str | None = None
 
         self._visible: bool = True
@@ -270,6 +283,7 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
             self.fixed_size = fixed_size
 
         self.color = color
+        self.font_size = font_size
         self.background_color = background_color
         self.border = border
         self.border_width = border_width
@@ -359,19 +373,19 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
         self._style = style
 
     @property
-    def margin(self) -> tuple[int, int, int, int]:
+    def margin(self) -> tuple[CSSDimension, CSSDimension, CSSDimension, CSSDimension] | None:
         return self._margin
     
     @margin.setter
-    def margin(self, margin: int | tuple[int, int, int, int] | None):
+    def margin(self, margin: CSSDimension | tuple[CSSDimension, CSSDimension, CSSDimension, CSSDimension] | None):
         self._margin = Validator.validate_box(margin, attr_name='Widget.margin')
 
     @property
-    def padding(self) -> tuple[int, int, int, int]:
+    def padding(self) -> tuple[CSSDimension, CSSDimension, CSSDimension, CSSDimension] | None:
         return self._padding
     
     @padding.setter
-    def padding(self, padding: int | tuple[int, int, int, int] | None):
+    def padding(self, padding: CSSDimension | tuple[CSSDimension, CSSDimension, CSSDimension, CSSDimension] | None):
         self._padding = Validator.validate_box(padding, attr_name='Widget.padding')
 
     @property
@@ -406,24 +420,24 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
         self._vertical_size_policy = Validator.ensure(size_policy, SizePolicy, attr_name='Widget.vertical_size_policy')
 
     @property
-    def minimum_width(self) -> int | None:
+    def minimum_width(self) -> CSSDimension | None:
         return self._minimum_width
 
     @minimum_width.setter
-    def minimum_width(self, width: int | None):
+    def minimum_width(self, width: CSSDimension | None):
         self._minimum_width = Validator.validate_dimension(width, attr_name='Widget.minimum_width')
 
     @property
-    def minimum_height(self) -> int | None:
+    def minimum_height(self) -> CSSDimension | None:
         return self._minimum_height
 
     @minimum_height.setter
-    def minimum_height(self, width: int | None):
+    def minimum_height(self, width: CSSDimension | None):
         self._minimum_height = Validator.validate_dimension(width, attr_name='Widget.minimum_height')
 
     @property
     def minimum_size(self) -> Size | None:
-        if isinstance(self.minimum_width, int) and isinstance(self.minimum_height, int):
+        if self.minimum_width is not None and self.minimum_height is not None:
             return Size(self.minimum_width, self.minimum_height)
         return None
     
@@ -431,8 +445,8 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
     def minimum_size(self, size: Size | None):
         size = Validator.ensure(size, Size, None, attr_name='Widget.minimum_size')
         if size:
-            width = Validator.ensure(size.width, int, attr_name='Widget.minimum_size.width')
-            height = Validator.ensure(size.height, int, attr_name='Widget.minimum_size.height')
+            width = Validator.ensure(size.width, CSSDimension, attr_name='Widget.minimum_size.width')
+            height = Validator.ensure(size.height, CSSDimension, attr_name='Widget.minimum_size.height')
         else:
             width = None
             height = None
@@ -441,35 +455,35 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
         self.minimum_height = height
 
     @property
-    def fixed_width(self) -> int | None:
+    def fixed_width(self) -> CSSDimension | None:
         """Overrides minimum_width and maximum_width"""
         return self._fixed_width
 
     @fixed_width.setter
-    def fixed_width(self, width: int | None):
+    def fixed_width(self, width: CSSDimension | None):
         self._fixed_width = Validator.validate_dimension(width, attr_name='Widget.fixed_width')
 
     @property
-    def fixed_height(self) -> int | None:
+    def fixed_height(self) -> CSSDimension | None:
         """Overrides minimum_height and maximum_height"""
         return self._fixed_height
 
     @fixed_height.setter
-    def fixed_height(self, width: int | None):
+    def fixed_height(self, width: CSSDimension | None):
         self._fixed_height = Validator.validate_dimension(width, attr_name='Widget.fixed_height')
 
     @property
     def fixed_size(self) -> Size | None:
         """Overrides minimum_size and maximum_size"""
-        if isinstance(self.fixed_width, int) and isinstance(self.fixed_height, int):
+        if self.fixed_width is not None and self.fixed_height is not None:
             return Size(self.fixed_width, self.fixed_height)
     
     @fixed_size.setter
     def fixed_size(self, size: Size | None):
         size = Validator.ensure(size, Size, None, attr_name='Widget.fixed_size')
         if size:
-            width = Validator.ensure(size.width, int, attr_name='Widget.fixed_size.width')
-            height = Validator.ensure(size.height, int, attr_name='Widget.fixed_size.height')
+            width = Validator.ensure(size.width, CSSDimension, attr_name='Widget.fixed_size.width')
+            height = Validator.ensure(size.height, CSSDimension, attr_name='Widget.fixed_size.height')
         else:
             width = None
             height = None
@@ -478,24 +492,24 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
         self.fixed_height = height
 
     @property
-    def maximum_width(self) -> int | None:
+    def maximum_width(self) -> CSSDimension | None:
         return self._maximum_width
 
     @maximum_width.setter
-    def maximum_width(self, width: int | None):
+    def maximum_width(self, width: CSSDimension | None):
         self._maximum_width = Validator.validate_dimension(width, attr_name='Widget.maximum_width')
 
     @property
-    def maximum_height(self) -> int | None:
+    def maximum_height(self) -> CSSDimension | None:
         return self._maximum_height
 
     @maximum_height.setter
-    def maximum_height(self, width: int | None):
+    def maximum_height(self, width: CSSDimension | None):
         self._maximum_height = Validator.validate_dimension(width, attr_name='Widget.maximum_height')
     
     @property
     def maximum_size(self) -> Size | None:
-        if isinstance(self.maximum_width, int) and isinstance(self.maximum_height, int):
+        if self.maximum_width is not None and self.maximum_height is not None:
             return Size(self.maximum_width, self.maximum_height)
         return None
     
@@ -503,8 +517,8 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
     def maximum_size(self, size: Size| None):
         size = Validator.ensure(size, Size, None, attr_name='Widget.maximum_size')
         if size:
-            width = Validator.ensure(size.width, int, attr_name='Widget.maximum_size.width')
-            height = Validator.ensure(size.height, int, attr_name='Widget.maximum_size.height')
+            width = Validator.ensure(size.width, CSSDimension, attr_name='Widget.maximum_size.width')
+            height = Validator.ensure(size.height, CSSDimension, attr_name='Widget.maximum_size.height')
         else:
             width = None
             height = None
@@ -559,6 +573,14 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
             self.enabled_changed.emit(self.enabled)
 
     @property
+    def font_size(self) -> CSSDimension | None:
+        return self._font_size
+
+    @font_size.setter
+    def font_size(self, font_size: CSSDimension | None):
+        self._font_size = Validator.validate_dimension(font_size, attr_name='Widget.font_size')
+
+    @property
     def color(self) -> ColorValue:
         return self._color
 
@@ -586,12 +608,12 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
         self._border = Validator.ensure(border, str, None, attr_name='Widget.border')
 
     @property
-    def border_width(self) -> int | str | None:
+    def border_width(self) -> CSSDimension | None:
         return self._border_width
 
     @border_width.setter
-    def border_width(self, border_width: int | str | None):
-        self._border_width = Validator.ensure(border_width, int, str, None, attr_name='Widget.border_width')
+    def border_width(self, border_width: CSSDimension | None):
+        self._border_width = Validator.validate_dimension(border_width, attr_name='Widget.border_width')
 
     @property
     def border_style(self) -> str | None:
@@ -610,12 +632,12 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
         self._border_color = Validator.ensure(border_color, ColorValue, None, attr_name='Widget.border_color')
 
     @property
-    def border_radius(self) -> int | str | None:
+    def border_radius(self) -> CSSDimension | None:
         return self._border_radius
 
     @border_radius.setter
-    def border_radius(self, border_radius: int | str | None):
-        self._border_radius = Validator.ensure(border_radius, int, str, None, attr_name='Widget.border_radius')
+    def border_radius(self, border_radius: CSSDimension | None):
+        self._border_radius = Validator.validate_dimension(border_radius, attr_name='Widget.border_radius')
 
     @property
     def opacity(self) -> int | float | str | None:
@@ -916,34 +938,35 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
         styles.update(self._styles_size_policy())
 
         if self.fixed_width is not None:
-            styles['width'] = f'{self.fixed_width}px'
+            styles['width'] = css_dimension(self.fixed_width)
         else:
             if self.minimum_width is not None:
-                styles['min-width'] = f'{self.minimum_width}px'
+                styles['min-width'] = css_dimension(self.minimum_width)
             if self.maximum_width is not None:
-                styles['max-width'] = f'{self.maximum_width}px'
+                styles['max-width'] = css_dimension(self.maximum_width)
 
         if self.fixed_height is not None:
-            styles['height'] = f'{self.fixed_height}px'
+            styles['height'] = css_dimension(self.fixed_height)
         else:
             if self.minimum_height is not None:
-                styles['min-height'] = f'{self.minimum_height}px'
+                styles['min-height'] = css_dimension(self.minimum_height)
             if self.maximum_height is not None:
-                styles['max-height'] = f'{self.maximum_height}px'
+                styles['max-height'] = css_dimension(self.maximum_height)
 
         if self.margin is not None:
-            top, right, bottom, left = self.margin
-            styles['margin'] = f'{top}px {right}px {bottom}px {left}px'
+            styles['margin'] = ' '.join(css_dimension(value) for value in self.margin)
 
         if self.padding is not None:
-            top, right, bottom, left = self.padding
-            styles['padding'] = f'{top}px {right}px {bottom}px {left}px'
+            styles['padding'] = ' '.join(css_dimension(value) for value in self.padding)
 
         if self.collapsed is True:
             styles['display'] = 'none'
 
         if self.visible is False:
             styles['visibility'] = 'hidden'
+
+        if self.font_size is not None:
+            styles['font-size'] = css_dimension(self.font_size)
 
         if self.color is not None:
             styles['color'] = str(self.color)
@@ -958,10 +981,7 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
             styles['border'] = self.border
 
         if self.border_width is not None:
-            styles['border-width'] = (
-                f'{self.border_width}px' if isinstance(self.border_width, int)
-                else self.border_width
-            )
+            styles['border-width'] = css_dimension(self.border_width)
 
         if self.border_style:
             styles['border-style'] = self.border_style
@@ -974,10 +994,7 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
                 styles['border-color'] = str(self.border_color)
 
         if self.border_radius is not None:
-            styles['border-radius'] = (
-                f'{self.border_radius}px' if isinstance(self.border_radius, int)
-                else self.border_radius
-            )
+            styles['border-radius'] = css_dimension(self.border_radius)
 
         if self.opacity is not None:
             styles['opacity'] = str(self.opacity)

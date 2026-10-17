@@ -12,16 +12,18 @@ from enum import StrEnum
 
 from ..exceptions import TreezeTypeError, TreezeValueError
 from ..validation import Validator
+from ..widget import CSSDimension, css_dimension
+from .clamp import Clamp
 from .gradients import ConeGradient, LinearGradient, RadialGradient
 
 # ______________________________________________________________________________________________________________________
 
 CssColor: TypeAlias = str | StrEnum | ConeGradient | LinearGradient | RadialGradient | None
-CssLength: TypeAlias = str | int | float | None  # Converted to raw string or suffixed with 'px'
+CssLength: TypeAlias = CSSDimension | float | None  # Floats retain pixel sizing compatibility
 CssNumber: TypeAlias = str | int | float | None  # Converted to raw string
 CssText: TypeAlias = str | None  # Converted to raw string
 
-CssValue: TypeAlias = str | int | float | StrEnum | LinearGradient | None
+CssValue: TypeAlias = str | int | float | StrEnum | LinearGradient | Clamp | None
 
 
 # ______________________________________________________________________________________________________________________
@@ -232,12 +234,10 @@ class Theme:
                 return str(value)
 
             case 'length':
-                Validator.ensure(value, str, int, float, attr_name=f'Theme.{name}')
-                if isinstance(value, int | float):
+                Validator.ensure(value, CSSDimension, float, attr_name=f'Theme.{name}')
+                if isinstance(value, float):
                     return f'{value}px'
-
-                if isinstance(value, str):
-                    return value
+                return css_dimension(value)
 
 
             case 'number':

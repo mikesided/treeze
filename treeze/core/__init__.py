@@ -8,7 +8,7 @@ Description:  Module init file for treeze.core
 from .app import App
 from .signals import Signal
 from .object import Object
-from .widget import Widget
+from .widget import Widget, CSSDimension, css_dimension
 from .client_action import ClientAction
 from ..runtime.connection import ConnectionContext
 from ..runtime.network_simulator import NetworkSimulator
@@ -44,6 +44,7 @@ from .exceptions import (
     TreezeValueError
 )
 
+from .types.clamp import Clamp
 from .types.size import Size
 from .types.gradients import ConeGradient, LinearGradient, RadialGradient
 from .types.theme import Theme

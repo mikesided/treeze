@@ -13,7 +13,7 @@ from ...core.enums import LayoutAlignment, LayoutStyle, InsertPosition, Variant
 from ...core.exceptions import TreezeValueError
 from ...core.node import Node
 from ...core.validation import Validator
-from ...core.widget import Widget
+from ...core.widget import Widget, CSSDimension, css_dimension
 
 # ______________________________________________________________________________________________________________________
 
@@ -34,7 +34,7 @@ class Layout(Container, ABC):
     )
     def __init__(
             self, 
-            spacing: int | tuple[int, int] | None = None,
+            spacing: CSSDimension | tuple[CSSDimension, CSSDimension] | None = None,
             alignment: tuple[LayoutAlignment, LayoutAlignment] = (LayoutAlignment.CENTER, LayoutAlignment.CENTER),
             horizontal_alignment: LayoutAlignment | None = None,
             ha: LayoutAlignment | None = None,  # Short code
@@ -65,12 +65,12 @@ class Layout(Container, ABC):
             self.vertical_alignment = vertical_alignment
 
     @property
-    def spacing(self) -> int | tuple[int, int] | None:
+    def spacing(self) -> CSSDimension | tuple[CSSDimension, CSSDimension] | None:
         return self._spacing
     
     @spacing.setter
-    def spacing(self, spacing: int | tuple[int, int] | None):
-        """Spacing can be an int or tuple(horizontal spacing, vertical spacing)"""
+    def spacing(self, spacing: CSSDimension | tuple[CSSDimension, CSSDimension] | None):
+        """Spacing is a CSS dimension or tuple(horizontal spacing, vertical spacing)."""
         self._spacing = Validator.validate_spacing(spacing, attr_name='Layout.spacing')
     
     @property
@@ -107,11 +107,11 @@ class Layout(Container, ABC):
     def _styles(self) -> dict[str, str]:
         styles = super()._styles()
 
-        if isinstance(self.spacing, int):
-            styles['gap'] = f'{self.spacing}px'
-        elif isinstance(self.spacing, tuple):
+        if isinstance(self.spacing, tuple):
             # NOTE: row-gap maps to "vertical spacing", and column-gap maps to "horizontal spacing"
-            styles['gap'] = f'{self.spacing[1]}px {self.spacing[0]}px'
+            styles['gap'] = f'{css_dimension(self.spacing[1])} {css_dimension(self.spacing[0])}'
+        elif self.spacing is not None:
+            styles['gap'] = css_dimension(self.spacing)
 
         return styles
     
