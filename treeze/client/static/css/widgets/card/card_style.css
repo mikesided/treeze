@@ -1,8 +1,8 @@
 .tz-card-flat {
-    border-style: solid;
+    border-style: var(--tz-card-border-style, solid);
     
 }
 
 .tz-card-elevated {
-    border-style: solid;
+    border-style: var(--tz-card-border-style, solid);
 }

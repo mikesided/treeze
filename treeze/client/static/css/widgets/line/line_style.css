@@ -21,9 +21,9 @@
 }
 
 .tz-line-horizontal.tz-line-double {
-    height: 3px;
+    height: var(--tz-line-double-thickness, 3px);
 }
 
 .tz-line-vertical.tz-line-double {
-    width: 3px;
+    width: var(--tz-line-double-thickness, 3px);
 }

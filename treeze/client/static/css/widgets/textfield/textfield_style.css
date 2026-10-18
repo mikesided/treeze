@@ -30,15 +30,15 @@
     --tz-textfield-background: transparent;
     --tz-textfield-disabled-background: transparent;
 
-    padding-left: 2px;
-    padding-right: 2px;
+    padding-left: var(--tz-textfield-padding-left, 2px);
+    padding-right: var(--tz-textfield-padding-right, 2px);
 
-    border-width: 0 0 1px;
-    border-radius: 0;
+    border-width: var(--tz-textfield-border-width, 0 0 1px);
+    border-radius: var(--tz-textfield-border-radius, 0);
 }
 
 .tz-textfield-underlined:not(:disabled):not(.tz-disabled):focus {
-    outline: none;
+    outline: var(--tz-textfield-focus-outline, none);
 }
 
 /*

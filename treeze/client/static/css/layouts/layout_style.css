@@ -1,44 +1,43 @@
 .tz-layout-plain {
-    padding: 0;
+    padding: var(--tz-layout-padding, 0);
     background: var(--tz-layout-background, transparent);
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
+    border: var(--tz-layout-border, 0);
+    border-radius: var(--tz-layout-border-radius, 0);
+    box-shadow: var(--tz-layout-box-shadow, none);
 }
 
 .tz-layout-panel {
     padding: var(--tz-layout-padding, 16px);
     background: var(--tz-layout-background, var(--tz-color-surface));
-    border: 1px solid var(--tz-layout-border-color, var(--tz-color-border));
-    border-radius: var(--tz-radius-md);
-    box-shadow: none;
+    border: var(--tz-layout-border-width, 1px) var(--tz-layout-border-style, solid) var(--tz-layout-border-color, var(--tz-color-border));
+    border-radius: var(--tz-layout-border-radius, var(--tz-radius-md));
+    box-shadow: var(--tz-layout-box-shadow, none);
 }
 
 .tz-layout-outlined {
-    background: transparent;
-    border: 1px solid var(--tz-layout-border-color, var(--tz-color-border));
-    border-radius: var(--tz-radius-md);
-    box-shadow: none;
+    background: var(--tz-layout-outlined-background, transparent);
+    border: var(--tz-layout-border-width, 1px) var(--tz-layout-border-style, solid) var(--tz-layout-border-color, var(--tz-color-border));
+    border-radius: var(--tz-layout-border-radius, var(--tz-radius-md));
+    box-shadow: var(--tz-layout-box-shadow, none);
 }
 
 .tz-layout-elevated {
     padding: var(--tz-layout-padding, 16px);
     background: var(--tz-layout-background, var(--tz-color-surface));
-    border: 0;
-    border-radius: var(--tz-radius-md);
-    box-shadow:
-        var(
+    border: var(--tz-layout-border, 0);
+    border-radius: var(--tz-layout-border-radius, var(--tz-radius-md));
+    box-shadow: var(--tz-layout-box-shadow, var(
             --tz-shadow-md,
             0 4px 12px rgb(0 0 0 / 12%)
-        );
+        ));
 }
 
 .tz-layout-rounded {
-    border-radius: var(--tz-radius-md);
+    border-radius: var(--tz-layout-border-radius, var(--tz-radius-md));
 }
 
 .tz-layout-transparent {
-    background: transparent;
-    border-color: transparent;
-    box-shadow: none;
+    background: var(--tz-layout-transparent-background, transparent);
+    border-color: var(--tz-layout-transparent-border-color, transparent);
+    box-shadow: var(--tz-layout-box-shadow, none);
 }

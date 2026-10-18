@@ -8,10 +8,10 @@
     display: inline-block;
     box-sizing: border-box;
 
-    margin: 0;
+    margin: var(--tz-label-margin, 0);
 
-    font-family: var(--tz-font-family);
-    color: var(--tz-color-text);
+    font-family: var(--tz-label-font-family, var(--tz-font-family));
+    color: var(--tz-label-color, var(--tz-color-text));
 
     min-width: 0;
 
@@ -20,5 +20,5 @@
 }
 
 .tz-label .tz-disabled {
-    color: var(--tz-color-disabled);
+    color: var(--tz-label-disabled-color, var(--tz-color-disabled));
 }

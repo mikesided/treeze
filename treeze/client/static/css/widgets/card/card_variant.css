@@ -1,39 +1,39 @@
 .tz-card-primary {
     --tz-card-border-color: var(--tz-color-primary);
-    color: var(--tz-color-primary);
+    color: var(--tz-card-color, var(--tz-color-primary));
 }
 
 .tz-card-secondary {
     --tz-card-border-color: var(--tz-color-secondary);
-    color: var(--tz-color-secondary);
+    color: var(--tz-card-color, var(--tz-color-secondary));
 }
 
 .tz-card-tertiary {
     --tz-card-border-color: var(--tz-color-tertiary);
-    color: var(--tz-color-tertiary);
+    color: var(--tz-card-color, var(--tz-color-tertiary));
 }
 
 .tz-card-success {
     --tz-card-border-color: var(--tz-color-success);
-    color: var(--tz-color-success);
+    color: var(--tz-card-color, var(--tz-color-success));
 }
 
 .tz-card-warning {
     --tz-card-border-color: var(--tz-color-warning);
-    color: var(--tz-color-warning);
+    color: var(--tz-card-color, var(--tz-color-warning));
 }
 
 .tz-card-danger {
     --tz-card-border-color: var(--tz-color-danger);
-    color: var(--tz-color-danger);
+    color: var(--tz-card-color, var(--tz-color-danger));
 }
 
 .tz-card-info {
     --tz-card-border-color: var(--tz-color-info);
-    color: var(--tz-color-info);
+    color: var(--tz-card-color, var(--tz-color-info));
 }
 
 .tz-card-muted {
     --tz-card-border-color: var(--tz-color-text-muted);
-    color: var(--tz-color-text-muted);
+    color: var(--tz-card-color, var(--tz-color-text-muted));
 }

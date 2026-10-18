@@ -1,35 +1,35 @@
 .tz-line-primary {
-    background-color: var(--tz-color-primary);
+    background-color: var(--tz-line-background-color, var(--tz-color-primary));
 }
 
 .tz-line-secondary {
-    background-color: var(--tz-color-secondary);
+    background-color: var(--tz-line-background-color, var(--tz-color-secondary));
 }
 
 .tz-line-tertiary {
-    background-color: var(--tz-color-tertiary);
+    background-color: var(--tz-line-background-color, var(--tz-color-tertiary));
 }
 
 .tz-line-success {
-    background-color: var(--tz-color-success);
+    background-color: var(--tz-line-background-color, var(--tz-color-success));
 }
 
 .tz-line-warning {
-    background-color: var(--tz-color-warning);
+    background-color: var(--tz-line-background-color, var(--tz-color-warning));
 }
 
 .tz-line-danger {
-    background-color: var(--tz-color-danger);
+    background-color: var(--tz-line-background-color, var(--tz-color-danger));
 }
 
 .tz-line-info {
-    background-color: var(--tz-color-info);
+    background-color: var(--tz-line-background-color, var(--tz-color-info));
 }
 
 .tz-line-muted {
-    background-color: var(--tz-color-text-muted);
+    background-color: var(--tz-line-background-color, var(--tz-color-text-muted));
 }
 
 .tz-line-strong {
-    background-color: var(--tz-color-border-strong);
+    background-color: var(--tz-line-background-color, var(--tz-color-border-strong));
 }

@@ -9,51 +9,50 @@
     box-sizing: border-box;
     min-width: 0;
 
-    padding: 6px 12px;
+    padding: var(--tz-textfield-padding, 6px 12px);
 
-    font: inherit;
-    line-height: var(--tz-line-height);
-    color: var(--tz-color-text);
-    caret-color: var(--tz-textfield-focus);
+    font: var(--tz-textfield-font, inherit);
+    line-height: var(--tz-textfield-line-height, var(--tz-line-height));
+    color: var(--tz-textfield-color, var(--tz-color-text));
+    caret-color: var(--tz-textfield-caret-color, var(--tz-textfield-focus));
     background: var(--tz-textfield-background);
 
-    border: 1px solid var(--tz-textfield-border);
-    border-radius: var(--tz-radius-md);
+    border: var(--tz-textfield-border-width, 1px) var(--tz-textfield-border-style, solid) var(--tz-textfield-border-color, var(--tz-textfield-border));
+    border-radius: var(--tz-textfield-border-radius, var(--tz-radius-md));
 
-    transition:
-        background-color 120ms ease,
+    transition: var(--tz-textfield-transition, background-color 120ms ease,
         border-color 120ms ease,
-        outline-color 120ms ease;
+        outline-color 120ms ease);
 }
 
 .tz-textfield::placeholder {
-    color: var(--tz-color-text-muted);
-    opacity: 1;
+    color: var(--tz-textfield-placeholder-color, var(--tz-color-text-muted));
+    opacity: var(--tz-textfield-placeholder-opacity, 1);
 }
 
 .tz-textfield:not(:disabled):not(.tz-disabled):hover {
     background: var(--tz-textfield-hover-background, var(--tz-textfield-background));
-    border-color: var(--tz-textfield-accent-hover);
+    border-color: var(--tz-textfield-hover-border-color, var(--tz-textfield-accent-hover));
 }
 
 .tz-textfield:not(:disabled):not(.tz-disabled):focus {
-    border-color: var(--tz-textfield-focus);
-    outline: 2px solid var(--tz-textfield-focus);
-    outline-offset: 2px;
+    border-color: var(--tz-textfield-focus-border-color, var(--tz-textfield-focus));
+    outline: var(--tz-textfield-focus-outline-width, 2px) var(--tz-textfield-focus-outline-style, solid) var(--tz-textfield-focus-outline-color, var(--tz-textfield-focus));
+    outline-offset: var(--tz-textfield-focus-outline-offset, 2px);
 }
 
 .tz-textfield:disabled,
 .tz-textfield.tz-disabled {
-    color: var(--tz-color-on-disabled);
+    color: var(--tz-textfield-disabled-color, var(--tz-color-on-disabled));
     background: var(--tz-textfield-disabled-background, var(--tz-color-disabled));
-    border-color: var(--tz-textfield-disabled-border, var(--tz-color-disabled-border));
+    border-color: var(--tz-textfield-disabled-border-color, var(--tz-textfield-disabled-border, var(--tz-color-disabled-border)));
     cursor: not-allowed;
-    opacity: 1;
+    opacity: var(--tz-textfield-disabled-opacity, 1);
 }
 
 .tz-textfield:disabled::placeholder,
 .tz-textfield.tz-disabled::placeholder {
-    color: var(--tz-color-on-disabled);
+    color: var(--tz-textfield-disabled-placeholder-color, var(--tz-color-on-disabled));
 }
 
 @media (prefers-reduced-motion: reduce) {

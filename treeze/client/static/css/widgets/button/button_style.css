@@ -5,16 +5,16 @@
 */
 
 .tz-button-filled {
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+    box-shadow: var(--tz-button-box-shadow, 0 1px 2px rgb(0 0 0 / 0.08));
 }
 
 .tz-button-filled:enabled:hover {
-    box-shadow: 0 2px 4px rgb(0 0 0 / 0.12);
+    box-shadow: var(--tz-button-hover-box-shadow, 0 2px 4px rgb(0 0 0 / 0.12));
 }
 
 .tz-button-filled:enabled:active {
-    box-shadow: none;
-    transform: translateY(1px);
+    box-shadow: var(--tz-button-active-box-shadow, none);
+    transform: var(--tz-button-active-transform, translateY(1px));
 }
 
 
@@ -25,16 +25,16 @@
 */
 
 .tz-button-outlined {
-    background: transparent;
+    background: var(--tz-button-background, transparent);
 }
 
 .tz-button-outlined:enabled:hover {
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+    box-shadow: var(--tz-button-hover-box-shadow, 0 1px 3px rgb(0 0 0 / 0.08));
 }
 
 .tz-button-outlined:enabled:active {
-    box-shadow: none;
-    transform: translateY(1px);
+    box-shadow: var(--tz-button-active-box-shadow, none);
+    transform: var(--tz-button-active-transform, translateY(1px));
 }
 
 
@@ -45,16 +45,16 @@
 */
 
 .tz-button-soft {
-    border-color: transparent;
-    opacity: 0.85;
+    border-color: var(--tz-button-border-color, transparent);
+    opacity: var(--tz-button-opacity, 0.85);
 }
 
 .tz-button-soft:enabled:hover {
-    opacity: 1;
+    opacity: var(--tz-button-hover-opacity, 1);
 }
 
 .tz-button-soft:enabled:active {
-    transform: translateY(1px);
+    transform: var(--tz-button-active-transform, translateY(1px));
 }
 
 
@@ -65,31 +65,31 @@
 */
 
 .tz-button-ghost {
-    background: transparent;
-    border-color: transparent;
+    background: var(--tz-button-background, transparent);
+    border-color: var(--tz-button-border-color, transparent);
 }
 
 .tz-button-ghost:enabled {
-    color: var(--tz-button-variant-color, var(--tz-color-text));
+    color: var(--tz-button-color, var(--tz-button-variant-color, var(--tz-color-text)));
 }
 
 .tz-button-ghost:disabled {
-    color: var(--tz-color-on-disabled);
-    background: transparent;
-    border-color: transparent;
+    color: var(--tz-button-disabled-color, var(--tz-color-on-disabled));
+    background: var(--tz-button-disabled-background, transparent);
+    border-color: var(--tz-button-disabled-border-color, transparent);
 }
 
 .tz-button-ghost:enabled:hover {
-    color: var(--tz-button-variant-hover, var(--tz-color-text));
-    background: transparent;
-    border-color: transparent;
+    color: var(--tz-button-hover-color, var(--tz-button-variant-hover, var(--tz-color-text)));
+    background: var(--tz-button-hover-background, transparent);
+    border-color: var(--tz-button-hover-border-color, transparent);
 }
 
 .tz-button-ghost:enabled:active {
-    color: var(--tz-button-variant-active, var(--tz-color-text));
-    background: transparent;
-    border-color: transparent;
-    transform: translateY(1px);
+    color: var(--tz-button-active-color, var(--tz-button-variant-active, var(--tz-color-text)));
+    background: var(--tz-button-active-background, transparent);
+    border-color: var(--tz-button-active-border-color, transparent);
+    transform: var(--tz-button-active-transform, translateY(1px));
 }
 
 
@@ -100,26 +100,26 @@
 */
 
 .tz-button-link {
-    background: transparent;
-    border-color: transparent;
+    background: var(--tz-button-background, transparent);
+    border-color: var(--tz-button-border-color, transparent);
 
-    border-radius: 0;
+    border-radius: var(--tz-button-border-radius, 0);
 
-    padding-left: 2px;
-    padding-right: 2px;
+    padding-left: var(--tz-button-padding-left, 2px);
+    padding-right: var(--tz-button-padding-right, 2px);
 
-    box-shadow: none;
+    box-shadow: var(--tz-button-box-shadow, none);
 }
 
 .tz-button-link:enabled:hover {
     text-decoration: underline;
-    text-underline-offset: 2px;
+    text-underline-offset: var(--tz-button-hover-text-underline-offset, 2px);
 }
 
 .tz-button-link:enabled:active {
-    transform: translateY(1px);
+    transform: var(--tz-button-active-transform, translateY(1px));
 }
 
 .tz-button:enabled:is(:hover, :focus-visible) {
-    border-color: var(--tz-color-primary);
+    border-color: var(--tz-button-highlight-border-color, var(--tz-color-primary));
 }

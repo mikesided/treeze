@@ -1,15 +1,15 @@
 .tz-image-fit {
     flex: 1 1 0;
-    object-fit: contain;
+    object-fit: var(--tz-image-object-fit, contain);
 }
 
 .tz-image-fill {
     flex: 1 1 0;
-    object-fit: cover;
+    object-fit: var(--tz-image-object-fit, cover);
 }
 
 .tz-image-fixed {
-    width: auto;
-    height: auto;
-    object-fit: none;
+    width: var(--tz-image-width, auto);
+    height: var(--tz-image-height, auto);
+    object-fit: var(--tz-image-object-fit, none);
 }
