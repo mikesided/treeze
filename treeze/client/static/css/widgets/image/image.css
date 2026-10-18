@@ -7,5 +7,6 @@
 .tz-image {
     width: var(--tz-image-width, 100%);
     height: var(--tz-image-height, 100%);
+    max-width: var(--tz-image-max-width, 100%);
     margin: var(--tz-image-margin, 0);
 }

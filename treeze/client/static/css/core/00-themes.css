@@ -9,23 +9,38 @@
     Base typography
     */
     --tz-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --tz-font-size: 14px;
+    --tz-font-size: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+    --tz-font-size-small: calc(var(--tz-font-size) * 0.875);
+    --tz-font-size-caption: calc(var(--tz-font-size) * 0.8125);
+    --tz-font-size-code: calc(var(--tz-font-size) * 0.9375);
+    --tz-font-size-heading-1: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+    --tz-font-size-heading-2: clamp(1.25rem, 1.05rem + 0.8vw, 1.625rem);
+    --tz-font-size-heading-3: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
     --tz-line-height: 1.2;
 
     /*
     Base spacing / shape
     */
-    --tz-spacing: 10px;
-    --tz-radius-sm: 4px;
-    --tz-radius-md: 8px;
-    --tz-radius-lg: 12px;
-    --tz-radius-full: 9999px;
+    --tz-spacing: clamp(0.5rem, 0.4rem + 0.5vw, 0.75rem);
+    --tz-control-padding: calc(var(--tz-spacing) * 0.75) calc(var(--tz-spacing) * 1.5);
+    --tz-panel-padding: calc(var(--tz-spacing) * 2);
+    --tz-radius-sm: 0.25rem;
+    --tz-radius-md: 0.5rem;
+    --tz-radius-lg: 0.75rem;
+    --tz-radius-full: 999rem;
 
      /*
      Sizing
      */
-    --tz-icon-size: 16px;
+    --tz-icon-size: clamp(1rem, 0.95rem + 0.2vw, 1.25rem);
+    --tz-control-min-height: 2.5rem;
 
+}
+
+@media (pointer: coarse) {
+    .tz-app {
+        --tz-control-min-height: 2.75rem;
+    }
 }
 
 /*

@@ -5,11 +5,11 @@
 */
 
 .tz-button-filled {
-    box-shadow: var(--tz-button-box-shadow, 0 1px 2px rgb(0 0 0 / 0.08));
+    box-shadow: var(--tz-button-box-shadow, 0 0.0625rem 0.125rem rgb(0 0 0 / 0.08));
 }
 
 .tz-button-filled:enabled:hover {
-    box-shadow: var(--tz-button-hover-box-shadow, 0 2px 4px rgb(0 0 0 / 0.12));
+    box-shadow: var(--tz-button-hover-box-shadow, 0 0.125rem 0.25rem rgb(0 0 0 / 0.12));
 }
 
 .tz-button-filled:enabled:active {
@@ -29,7 +29,7 @@
 }
 
 .tz-button-outlined:enabled:hover {
-    box-shadow: var(--tz-button-hover-box-shadow, 0 1px 3px rgb(0 0 0 / 0.08));
+    box-shadow: var(--tz-button-hover-box-shadow, 0 0.0625rem 0.1875rem rgb(0 0 0 / 0.08));
 }
 
 .tz-button-outlined:enabled:active {
@@ -105,15 +105,15 @@
 
     border-radius: var(--tz-button-border-radius, 0);
 
-    padding-left: var(--tz-button-padding-left, 2px);
-    padding-right: var(--tz-button-padding-right, 2px);
+    padding-left: var(--tz-button-padding-left, 0.125em);
+    padding-right: var(--tz-button-padding-right, 0.125em);
 
     box-shadow: var(--tz-button-box-shadow, none);
 }
 
 .tz-button-link:enabled:hover {
     text-decoration: underline;
-    text-underline-offset: var(--tz-button-hover-text-underline-offset, 2px);
+    text-underline-offset: var(--tz-button-hover-text-underline-offset, 0.125em);
 }
 
 .tz-button-link:enabled:active {

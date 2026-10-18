@@ -1,6 +1,8 @@
 .tz-card {    
     --tz-card-border-color: var(--tz-color-border-strong);
 
+    gap: var(--tz-card-gap, 0);
+
     border-style: var(--tz-card-border-style, solid);
     border-width: var(--tz-card-border-width, 1px);
     border-color: var(--tz-card-border-color);

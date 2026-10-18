@@ -7,7 +7,7 @@
 }
 
 .tz-layout-panel {
-    padding: var(--tz-layout-padding, 16px);
+    padding: var(--tz-layout-padding, var(--tz-panel-padding));
     background: var(--tz-layout-background, var(--tz-color-surface));
     border: var(--tz-layout-border-width, 1px) var(--tz-layout-border-style, solid) var(--tz-layout-border-color, var(--tz-color-border));
     border-radius: var(--tz-layout-border-radius, var(--tz-radius-md));
@@ -22,13 +22,13 @@
 }
 
 .tz-layout-elevated {
-    padding: var(--tz-layout-padding, 16px);
+    padding: var(--tz-layout-padding, var(--tz-panel-padding));
     background: var(--tz-layout-background, var(--tz-color-surface));
     border: var(--tz-layout-border, 0);
     border-radius: var(--tz-layout-border-radius, var(--tz-radius-md));
     box-shadow: var(--tz-layout-box-shadow, var(
             --tz-shadow-md,
-            0 4px 12px rgb(0 0 0 / 12%)
+            0 0.25rem 0.75rem rgb(0 0 0 / 12%)
         ));
 }
 

@@ -30,8 +30,8 @@
     --tz-textfield-background: transparent;
     --tz-textfield-disabled-background: transparent;
 
-    padding-left: var(--tz-textfield-padding-left, 2px);
-    padding-right: var(--tz-textfield-padding-right, 2px);
+    padding-left: var(--tz-textfield-padding-left, 0.125em);
+    padding-right: var(--tz-textfield-padding-right, 0.125em);
 
     border-width: var(--tz-textfield-border-width, 0 0 1px);
     border-radius: var(--tz-textfield-border-radius, 0);

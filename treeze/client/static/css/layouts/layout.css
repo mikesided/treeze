@@ -10,6 +10,7 @@
 
 .tz-layout-horizontal {
     flex-direction: row;
+    flex-wrap: var(--tz-layout-wrap, nowrap);
 }
 
 .tz-layout-vertical {

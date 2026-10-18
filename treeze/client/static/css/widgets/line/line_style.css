@@ -4,7 +4,10 @@
 
 .tz-line-dashed {
     mask-image: repeating-linear-gradient(
-        var(--tz-line-direction), #000 0 6px, transparent 6px 10px
+        var(--tz-line-direction),
+        #000 0 var(--tz-line-dash-length, 0.375rem),
+        transparent var(--tz-line-dash-length, 0.375rem)
+        calc(var(--tz-line-dash-length, 0.375rem) + var(--tz-line-dash-gap, 0.25rem))
     );
 }
 

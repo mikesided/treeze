@@ -4,8 +4,10 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: var(--tz-button-gap, calc(var(--tz-spacing) * 0.5));
 
-    padding: var(--tz-button-padding, 6px 12px);
+    padding: var(--tz-button-padding, var(--tz-control-padding));
+    min-height: var(--tz-button-min-height, var(--tz-control-min-height));
 
     font: var(--tz-button-font, inherit);
     line-height: var(--tz-button-line-height, var(--tz-line-height));

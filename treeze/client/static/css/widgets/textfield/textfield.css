@@ -9,7 +9,8 @@
     box-sizing: border-box;
     min-width: 0;
 
-    padding: var(--tz-textfield-padding, 6px 12px);
+    padding: var(--tz-textfield-padding, var(--tz-control-padding));
+    min-height: var(--tz-textfield-min-height, var(--tz-control-min-height));
 
     font: var(--tz-textfield-font, inherit);
     line-height: var(--tz-textfield-line-height, var(--tz-line-height));

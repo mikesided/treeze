@@ -8,7 +8,7 @@
     height: var(--tz-line-length, 100%);
     --tz-line-direction: to bottom;
     --tz-line-cross-direction: to right;
-    --tz-line-dot-size: 100% 4px;
+    --tz-line-dot-size: 100% var(--tz-line-dot-spacing, 0.25rem);
 }
 
 .tz-line-horizontal {
@@ -16,5 +16,5 @@
     height: var(--tz-line-thickness, 1px);
     --tz-line-direction: to right;
     --tz-line-cross-direction: to bottom;
-    --tz-line-dot-size: 4px 100%;
+    --tz-line-dot-size: var(--tz-line-dot-spacing, 0.25rem) 100%;
 }
