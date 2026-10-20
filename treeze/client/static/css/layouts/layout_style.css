@@ -1,5 +1,4 @@
 .tz-layout-plain {
-    padding: var(--tz-layout-padding, 0);
     background: var(--tz-layout-background, transparent);
     border: var(--tz-layout-border, 0);
     border-radius: var(--tz-layout-border-radius, 0);
@@ -7,7 +6,6 @@
 }
 
 .tz-layout-panel {
-    padding: var(--tz-layout-padding, var(--tz-panel-padding));
     background: var(--tz-layout-background, var(--tz-color-surface));
     border: var(--tz-layout-border-width, 1px) var(--tz-layout-border-style, solid) var(--tz-layout-border-color, var(--tz-color-border));
     border-radius: var(--tz-layout-border-radius, var(--tz-radius-md));
@@ -22,7 +20,6 @@
 }
 
 .tz-layout-elevated {
-    padding: var(--tz-layout-padding, var(--tz-panel-padding));
     background: var(--tz-layout-background, var(--tz-color-surface));
     border: var(--tz-layout-border, 0);
     border-radius: var(--tz-layout-border-radius, var(--tz-radius-md));
