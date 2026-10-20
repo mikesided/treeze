@@ -20,6 +20,7 @@ from .exceptions import TreezeValueError, TreezeRuntimeError, TreezeTypeError
 from .object import Object
 from .signals import BoundSignal, Signal
 from .client_action import ClientAction
+from .types.background_image import BackgroundImage
 from .types.clamp import Clamp
 from .types.size import Size
 from .types.gradients import ConeGradient, LinearGradient, RadialGradient
@@ -157,6 +158,7 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
 
         # CSS Wrappers
         color: str | Color | None = None,
+        background: BackgroundImage | None = None,
         background_color: ColorValue | None = None,
         border: str | None = None,
         border_width: CSSDimension | None = None,
@@ -243,6 +245,7 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
 
         self._color: ColorValue | None = None
         self._font_size: CSSDimension | None = None
+        self._background: BackgroundImage | None = None
         self._background_color: ColorValue | None = None
         self._border_width: CSSDimension | None = None
         self._border_style: str | None = None
@@ -284,6 +287,7 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
 
         self.color = color
         self.font_size = font_size
+        self.background = background
         self.background_color = background_color
         self.border = border
         self.border_width = border_width
@@ -589,11 +593,19 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
         self._color = Validator.ensure(color, ColorValue, None, attr_name='Widget.color')
 
     @property
-    def background_color(self) -> ColorValue:
+    def background(self) -> BackgroundImage | None:
+        return self._background
+
+    @background.setter
+    def background(self, background: BackgroundImage | None):
+        self._background = Validator.ensure(background, BackgroundImage, None, attr_name='Widget.background')
+
+    @property
+    def background_color(self) -> ColorValue | None:
         return self._background_color
 
     @background_color.setter
-    def background_color(self, background_color: ColorValue):
+    def background_color(self, background_color: ColorValue | None):
         self._background_color = Validator.ensure(background_color, ColorValue, None, attr_name='Widget.background_color')
 
     @property
@@ -971,11 +983,7 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
         if self.color is not None:
             styles['color'] = str(self.color)
 
-        if self.background_color is not None:
-            property_name = 'background' if isinstance(
-                self.background_color, (ConeGradient, LinearGradient, RadialGradient)
-            ) else 'background-color'
-            styles[property_name] = str(self.background_color)
+        styles.update(self._styles_background(self.background_color))
 
         if self.border:
             styles['border'] = self.border
@@ -1001,6 +1009,15 @@ class Widget(Object, ABC, metaclass=_WidgetMeta):
 
         return styles
     
+    def _styles_background(self, color: ColorValue | None) -> dict[str, str]:
+        styles = self.background._styles() if self.background is not None else {}
+        if isinstance(color, (ConeGradient, LinearGradient, RadialGradient)):
+            image = styles.get('background-image')
+            styles['background-image'] = f'{image}, {color}' if image else str(color)
+        elif color is not None:
+            styles['background-color'] = str(color)
+        return styles
+
     def _styles_size_policy(self) -> dict[str, str]:
         styles = {}
 

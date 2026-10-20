@@ -187,7 +187,8 @@ def _diff_mapping(
 ) -> None:
     names = set(old) | set(new)
 
-    for name in sorted(names):
+    # Clear styles first so removed longhands cannot erase a newly applied shorthand.
+    for name in sorted(names, key=lambda name: (op == PatchOp.SET_STYLE and new.get(name) is not None, name)):
         old_value = old.get(name)
         new_value = new.get(name)
 

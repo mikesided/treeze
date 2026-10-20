@@ -29,6 +29,7 @@ from .enums import (
     LineStyle,
     Orientation,
     PatchOp,
+    Position,
     SizePolicy,
     TextAlignment,
     TextFieldStyle,
@@ -44,6 +45,7 @@ from .exceptions import (
     TreezeValueError
 )
 
+from .types.background_image import BackgroundImage
 from .types.clamp import Clamp
 from .types.size import Size
 from .types.gradients import ConeGradient, LinearGradient, RadialGradient

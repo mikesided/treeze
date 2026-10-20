@@ -290,6 +290,19 @@ class PatchOp(StrEnum):
     REMOVE_CLASS = 'remove_class'
 
     
+class Position(StrEnum):
+    TOP_LEFT = 'top left'
+    TOP = 'top center'
+    TOP_RIGHT = 'top right'
+
+    LEFT = 'center left'
+    CENTER = 'center'
+    RIGHT = 'center right'
+
+    BOTTOM_LEFT = 'bottom left'
+    BOTTOM = 'bottom center'
+    BOTTOM_RIGHT = 'bottom right'
+
 class SizePolicy(StrEnum):
     EXPANDING = '1 1 auto'
     FIXED = '0 0 auto'

@@ -66,11 +66,9 @@ class Line(Widget):
 
     def _styles(self):
         styles = super()._styles()
-        if 'background-color' in styles:
-            styles['background'] = styles.pop('background-color')
         if self.color is not None and self.background_color is None:
             styles.pop('color', None)
-            styles['background'] = str(self.color)
+            styles.update(self._styles_background(self.color))
         return styles
 
     def _render(self) -> Node:
